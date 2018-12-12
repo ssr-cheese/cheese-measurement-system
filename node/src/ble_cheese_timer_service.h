@@ -1,7 +1,7 @@
 /**
- * @file ble_cheese_measurement_service.h
+ * @file ble_cheese_timer_service.h
  * @author Ryotaro Onuki (kerikun11+github@gmail.com)
- * @brief BLE GATT Server Cheese Measurement Service
+ * @brief BLE GATT Server Cheese Timer Service
  * @version 0.1
  * @date 2018-12-12
  *
@@ -15,17 +15,17 @@
 #include <BLEService.h>
 #include <BLEUUID.h>
 
-class BLECheeseMeasurementService {
+class BLECheeseTimerService {
 public:
   static const BLEUUID ServiceUUID;
   static const BLEUUID DataCharacteristicUUID;
 
 public:
   /**
-   * @brief Construct a new BLECheeseMeasurementService object
+   * @brief Construct a new BLECheeseTimerService object
    * @param pServer should not be nullptr
    */
-  BLECheeseMeasurementService(BLEServer *pServer);
+  BLECheeseTimerService(BLEServer *pServer);
   /**
    * @brief Set the Value object
    * @param value passed time?

@@ -1,14 +1,14 @@
 /**
- * @file ble_cheese_measurement_service.cpp
+ * @file ble_cheese_timer_service.cpp
  * @author Ryotaro Onuki (kerikun11+github@gmail.com)
- * @brief BLE GATT Server Cheese Measurement Service
+ * @brief BLE GATT Server Cheese Timer Service
  * @version 0.1
  * @date 2018-12-12
  *
  * @copyright Copyright (c) 2018 Ryotaro Onuki
  *
  */
-#include "ble_cheese_measurement_service.h"
+#include "ble_cheese_timer_service.h"
 
 #include <BLE2902.h>
 #include <BLE2904.h>
@@ -18,17 +18,17 @@
 
 #include "app_log.h"
 
-const BLEUUID BLECheeseMeasurementService::ServiceUUID =
+const BLEUUID BLECheeseTimerService::ServiceUUID =
     BLEUUID("e2830000-fdb1-11e8-8eb2-f2801f1b9fd1");
 
-const BLEUUID BLECheeseMeasurementService::DataCharacteristicUUID =
+const BLEUUID BLECheeseTimerService::DataCharacteristicUUID =
     BLEUUID("e2830001-fdb1-11e8-8eb2-f2801f1b9fd1");
 
-BLECheeseMeasurementService::BLECheeseMeasurementService(BLEServer *pServer)
+BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer)
     : pServer(pServer) {
-  /* Cheese Measurement Service */
+  /* Cheese Timer Service */
   pCheeseService = pServer->createService(ServiceUUID);
-  /* Cheese Measurement Characteristic */
+  /* Cheese Timer Characteristic */
   pCheeseCharacteristic = pCheeseService->createCharacteristic(
       DataCharacteristicUUID,
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
@@ -46,7 +46,7 @@ BLECheeseMeasurementService::BLECheeseMeasurementService(BLEServer *pServer)
   pCheeseCharacteristic->setCallbacks(new CheeseCharacteristicCallbacks());
   /* BLE CUD: Characteristic User Description (0x2901) */
   BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
-  pBLE2901->setValue("CheeseMeasurementData");
+  pBLE2901->setValue("CheeseTimerData");
   pCheeseCharacteristic->addDescriptor(pBLE2901);
   /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
   BLE2902 *pBLE2902 = new BLE2902();
@@ -67,8 +67,8 @@ BLECheeseMeasurementService::BLECheeseMeasurementService(BLEServer *pServer)
   pCheeseService->start();
 }
 
-void BLECheeseMeasurementService::setValue(uint32_t value) {
+void BLECheeseTimerService::setValue(uint32_t value) {
   pCheeseCharacteristic->setValue(value);
 }
 
-void BLECheeseMeasurementService::notify() { pCheeseCharacteristic->notify(); }
+void BLECheeseTimerService::notify() { pCheeseCharacteristic->notify(); }

@@ -1,7 +1,7 @@
 /**
- * @file main.cpp
+ * @file app_main.cpp
  * @author Ryotaro Onuki (kerikun11+github@gmail.com)
- * @brief Cheese Measure Sensor Part
+ * @brief Cheese Timer Sensor Node Part
  * @version 0.1
  * @date 2018-12-11
  *
@@ -17,19 +17,19 @@
 #include <iostream>
 
 #include "ble_battery_service.h"
-#include "ble_cheese_measurement_service.h"
+#include "ble_cheese_timer_service.h"
 
 #include "app_log.h"
 
 extern "C" void app_main() {
   /* Boot Message */
-  logi << "Cheese Measurement Sensor Part" << std::endl;
+  logi << "Cheese Timer Node" << std::endl;
 
   /* NVS flash initialization */
   nvs_flash_init();
 
   /* BLE Initialization */
-  BLEDevice::init("Cheese Measure Sensor");
+  BLEDevice::init("Cheese Timer Node");
 
   /* BLE Server */
   BLEServer *pServer = BLEDevice::createServer();
@@ -46,9 +46,8 @@ extern "C" void app_main() {
   };
   pServer->setCallbacks(new MyBLEServerCallbacks());
 
-  /* Cheese Measure Service */
-  BLECheeseMeasurementService *pCheeseService =
-      new BLECheeseMeasurementService(pServer);
+  /* Cheese Timer Service */
+  BLECheeseTimerService *pCheeseService = new BLECheeseTimerService(pServer);
 
   /* Battery Service */
   BLEBatteryService *pBatteryService = new BLEBatteryService(pServer);
@@ -56,7 +55,7 @@ extern "C" void app_main() {
   /* BLE Advertising */
   BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
   /* add service UUID to display */
-  pBLEAdvertising->addServiceUUID(BLECheeseMeasurementService::ServiceUUID);
+  pBLEAdvertising->addServiceUUID(BLECheeseTimerService::ServiceUUID);
   pBLEAdvertising->start();
 
   /* Main Loop */
