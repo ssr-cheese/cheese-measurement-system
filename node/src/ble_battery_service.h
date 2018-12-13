@@ -11,10 +11,22 @@
 #pragma once
 
 #include <BLECharacteristic.h>
+#include <BLEClient.h>
 #include <BLEServer.h>
 #include <BLEService.h>
 
+#include <functional>
+
+#include "app_log.h"
+
 class BLEBatteryService {
+public:
+  /**
+   * @brief BLE UUIDs
+   */
+  static const BLEUUID ServiceUUID;
+  static const BLEUUID BatteryLevelCharacteristicUUID;
+
 public:
   /**
    * @brief Construct a new BLEBatteryService object
@@ -35,4 +47,37 @@ protected:
   BLEServer *pServer;
   BLEService *pBatteryService;
   BLECharacteristic *pBatteryLevelCharacteristic;
+};
+
+class BLEBatteryServiceClient {
+public:
+  BLEBatteryServiceClient(
+      BLEClient *pClient,
+      std::function<void(uint8_t)> notifyCallback = nullptr) {
+    /* BLE Remote Service */
+    pBatteryService = pClient->getService(BLEBatteryService::ServiceUUID);
+    /* BLE Remote Characteristic */
+    pBatteryLevelCharacteristic = pBatteryService->getCharacteristic(
+        BLEBatteryService::BatteryLevelCharacteristicUUID);
+    /* setup notify callback */
+    pBatteryLevelCharacteristic->registerForNotify(
+        [notifyCallback](BLERemoteCharacteristic *pService, uint8_t *pData,
+                         size_t length, bool isNotify) {
+          if (length < 1) {
+            logw << "no Battery Level data" << std::endl;
+            return;
+          }
+          uint8_t level = pData[0];
+          logi << "Battery Level: " << (int)level << std::endl;
+          if (notifyCallback != nullptr)
+            notifyCallback(level);
+        });
+  }
+  uint8_t readBatteryLevel() {
+    return pBatteryLevelCharacteristic->readUInt8();
+  }
+
+protected:
+  BLERemoteService *pBatteryService;
+  BLERemoteCharacteristic *pBatteryLevelCharacteristic;
 };

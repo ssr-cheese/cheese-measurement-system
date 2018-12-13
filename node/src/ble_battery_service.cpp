@@ -19,6 +19,12 @@
 
 #include "app_log.h"
 
+const BLEUUID BLEBatteryService::ServiceUUID =
+    BLEUUID(static_cast<uint16_t>(0x180f));
+
+const BLEUUID BLEBatteryService::BatteryLevelCharacteristicUUID =
+    BLEUUID(static_cast<uint16_t>(0x2a19));
+
 BLEBatteryService::BLEBatteryService(BLEServer *pServer) : pServer(pServer) {
   /* Battery Service */
   pBatteryService = pServer->createService(static_cast<uint16_t>(0x180f));
