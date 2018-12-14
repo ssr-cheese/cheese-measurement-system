@@ -12,13 +12,17 @@
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <FreeRTOS.h>
+#include <VL6180X.h>
 #include <nvs_flash.h>
 
 #include <iostream>
+#include <thread>
 
+#include "battery_monitor.h"
 #include "ble_battery_service.h"
 #include "ble_cheese_timer_service.h"
 
+#include "app_config.h"
 #include "app_log.h"
 
 extern "C" void app_main() {
@@ -27,6 +31,10 @@ extern "C" void app_main() {
 
   /* NVS flash initialization */
   nvs_flash_init();
+
+  /* Battery Monitor */
+  BatteryMonitor *pBatteryMonitor = new BatteryMonitor(
+      BatteryAdcChannel, BatteryMinVoltage, BatteryMaxVoltage);
 
   /* BLE Initialization */
   BLEDevice::init("Cheese Timer Node");
@@ -58,22 +66,47 @@ extern "C" void app_main() {
   pBLEAdvertising->addServiceUUID(BLECheeseTimerService::ServiceUUID);
   pBLEAdvertising->start();
 
-  /* Main Loop */
-  while (1) {
-    /* for example */
-    FreeRTOS::sleep(1000);
-    {
-      uint32_t value = FreeRTOS::getTimeSinceStart();
-      pCheeseService->setValue(value);
-      pCheeseService->notify();
-    }
-    {
-      uint8_t value = FreeRTOS::getTimeSinceStart() % 101;
-      pBatteryService->setBatteryLevel(value);
-      pBatteryService->notify();
-    }
+  /* ToF Sensor Initialization */
+  VL6180X tof;
+  tof.i2cMasterInit();
+  if (!tof.init()) {
+    pCheeseService->notifyMessage("Failed to Initialize ToF sensor :(");
+    // vTaskDelay(portMAX_DELAY);
   }
 
-  /* sleep forever */
-  vTaskDelay(portMAX_DELAY);
+  /* Battery Monitor Thread in Background*/
+  std::thread batteryMonitorThread([&] {
+    const auto period = std::chrono::seconds(3);
+    auto sleep_time_handle = std::chrono::steady_clock::now();
+    while (1) {
+      /* Periodical EXecution */
+      std::this_thread::sleep_until(sleep_time_handle += period);
+      uint8_t level =
+          pBatteryMonitor->calcBatteryLevel(pBatteryMonitor->getVoltage());
+      pBatteryService->setBatteryLevel(level);
+      pBatteryService->notify();
+    }
+  });
+
+  /* Cheese Time Thread in Background */
+  std::thread cheeseTimerThread([&] {
+    const int Threshold_mm = 80;
+    while (1) {
+      int32_t range_mm;
+      if (!tof.read(&range_mm))
+        continue;
+      logi << "ToF Range: " << (int)range_mm << std::endl;
+      if (range_mm < Threshold_mm) {
+        uint32_t value = range_mm;
+        pCheeseService->setPassedTime(value);
+        pCheeseService->notify();
+        // Prevent from chattering
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+    }
+  });
+
+  /* wait forever */
+  batteryMonitorThread.join();
+  cheeseTimerThread.join();
 }

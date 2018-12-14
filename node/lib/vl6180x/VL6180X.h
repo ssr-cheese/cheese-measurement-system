@@ -48,9 +48,10 @@ public:
     }
     return true;
   }
-  bool read(uint16_t *pRangeMilliMeter) {
+  bool read(int32_t *pRangeMilliMeter) {
     VL6180x_RangeData_t Range;
-    VL6180x_RangePollMeasurement(dev, &Range);
+    if (VL6180x_RangePollMeasurement(dev, &Range) < 0)
+      return false;
     if (Range.errorStatus != 0)
       return false;
     *pRangeMilliMeter = Range.range_mm;
