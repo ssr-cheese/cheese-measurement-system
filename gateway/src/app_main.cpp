@@ -83,9 +83,9 @@ extern "C" void app_main() {
 
   /* GATT BAS */
   BLEBatteryServiceClient *pBLEBatteryServiceClient __attribute__((unused)) =
-      new BLEBatteryServiceClient(pClient,[](uint8_t level){
-        logi << (int)level << std::endl;
-      });
+      new BLEBatteryServiceClient(
+          pClient, [](uint8_t level) { logi << (int)level << std::endl; });
+
   /* BLE Remote Service: CCMS */
   BLERemoteService *pBLECheeseService =
       pClient->getService(BLECheeseTimerService::ServiceUUID);
@@ -93,7 +93,7 @@ extern "C" void app_main() {
   /* BLE Remote Characteristic */
   BLERemoteCharacteristic *pBLECheeseData =
       pBLECheeseService->getCharacteristic(
-          BLECheeseTimerService::DataCharacteristicUUID);
+          BLECheeseTimerService::TimeCharacteristicUUID);
   std::cout << pBLECheeseService->toString() << std::endl;
   /* setup notify callback */
   pBLECheeseData->registerForNotify(

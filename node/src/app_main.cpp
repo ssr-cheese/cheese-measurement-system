@@ -11,7 +11,6 @@
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
-#include <FreeRTOS.h>
 #include <VL6180X.h>
 #include <nvs_flash.h>
 
@@ -90,7 +89,7 @@ extern "C" void app_main() {
 
   /* Cheese Time Thread in Background */
   std::thread cheeseTimerThread([&] {
-    const int Threshold_mm = 80;
+    const int Threshold_mm = 80; //< BLEで可変にしたい
     while (1) {
       int32_t range_mm;
       if (!tof.read(&range_mm))
@@ -98,9 +97,10 @@ extern "C" void app_main() {
       logi << "ToF Range: " << (int)range_mm << std::endl;
       if (range_mm < Threshold_mm) {
         uint32_t value = range_mm;
+        // 一時的に，時刻ではなく測定データを送信している．
         pCheeseService->setPassedTime(value);
         pCheeseService->notify();
-        // Prevent from chattering
+        /* Prevent from chattering */
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
