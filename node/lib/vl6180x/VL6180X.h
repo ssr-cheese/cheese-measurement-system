@@ -49,12 +49,10 @@ public:
     return true;
   }
   int read() {
-    VL6180x_RangeData_t Range;
-    if (VL6180x_RangePollMeasurement(dev, &Range) < 0)
+    int32_t RangeMilliMeter = INT32_MAX;
+    if (!read(&RangeMilliMeter))
       return INT_MAX;
-    if (Range.errorStatus != 0)
-      return INT_MAX;
-    return Range.range_mm;
+    return RangeMilliMeter;
   }
   bool read(int32_t *pRangeMilliMeter) {
     VL6180x_RangeData_t Range;

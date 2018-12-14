@@ -19,6 +19,7 @@
 #include <nvs_flash.h>
 
 #include <VL6180X.h>
+#include <VL53L0X.h>
 
 #include <thread>
 
@@ -68,6 +69,7 @@ extern "C" void app_main() {
 
   /* ToF Sensor Initialization */
   VL6180X tof;
+  // VL53L0X tof;
   tof.i2cMasterInit();
   if (!tof.init()) {
     pCheeseService->notifyMessage("Failed to Initialize ToF sensor :(");
@@ -97,7 +99,7 @@ extern "C" void app_main() {
       if (range_mm < Threshold_mm) {
         if (!passing) {
           passing = true;
-          logd << "New Passed: " << (int)range_mm << " [mm]" << std::endl;
+          logd << "New Passed: " << range_mm << " [mm]" << std::endl;
           uint32_t value = range_mm;
           // 一時的に，時刻ではなく測定データを送信している．
           pCheeseService->setPassedTime(value);

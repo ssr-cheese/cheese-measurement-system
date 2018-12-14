@@ -5,7 +5,7 @@
  * @version 0.1
  * @date 2018-11-07
  *
- * @copyright Copyright (c) 2018
+ * @copyright Copyright (c) 2018 Ryotaro Onuki
  *
  */
 #pragma once
@@ -90,6 +90,12 @@ public:
       return false;
     }
     return true;
+  }
+  int read() {
+    uint16_t RangeMilliMeter = UINT16_MAX;
+    if (!read(&RangeMilliMeter))
+      return INT_MAX;
+    return RangeMilliMeter;
   }
   bool read(uint16_t *pRangeMilliMeter) {
     if (gpio_gpio1 != GPIO_NUM_MAX)
