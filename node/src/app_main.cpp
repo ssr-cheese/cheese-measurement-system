@@ -9,17 +9,18 @@
  *
  */
 
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <VL6180X.h>
-#include <nvs_flash.h>
-
-#include <iostream>
-#include <thread>
-
 #include "battery_monitor.h"
 #include "ble_battery_service.h"
 #include "ble_cheese_timer_service.h"
+
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <Thread.h>
+#include <nvs_flash.h>
+
+#include <VL6180X.h>
+
+#include <thread>
 
 #include "app_config.h"
 #include "app_log.h"
@@ -74,7 +75,7 @@ extern "C" void app_main() {
   }
 
   /* Battery Monitor Thread in Background*/
-  std::thread batteryMonitorThread([&] {
+  FreeRTOSpp::Thread batteryMonitorThread([&]() {
     const auto period = std::chrono::seconds(3);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
@@ -88,20 +89,24 @@ extern "C" void app_main() {
   });
 
   /* Cheese Time Thread in Background */
-  std::thread cheeseTimerThread([&] {
-    const int Threshold_mm = 80; //< BLEで可変にしたい
+  FreeRTOSpp::Thread cheeseTimerThread([&]() {
+    const int Threshold_mm = 150; //< BLEで可変にしたい
+    bool passing = false;
     while (1) {
-      int32_t range_mm;
-      if (!tof.read(&range_mm))
-        continue;
-      logi << "ToF Range: " << (int)range_mm << std::endl;
+      int range_mm = tof.read();
       if (range_mm < Threshold_mm) {
-        uint32_t value = range_mm;
-        // 一時的に，時刻ではなく測定データを送信している．
-        pCheeseService->setPassedTime(value);
-        pCheeseService->notify();
-        /* Prevent from chattering */
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (!passing) {
+          passing = true;
+          logd << "New Passed: " << (int)range_mm << " [mm]" << std::endl;
+          uint32_t value = range_mm;
+          // 一時的に，時刻ではなく測定データを送信している．
+          pCheeseService->setPassedTime(value);
+          pCheeseService->notify();
+          /* Prevent from chattering */
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+      } else {
+        passing = false;
       }
     }
   });
