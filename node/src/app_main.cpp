@@ -18,8 +18,8 @@
 #include <Thread.h>
 #include <nvs_flash.h>
 
-#include <VL6180X.h>
 #include <VL53L0X.h>
+#include <VL6180X.h>
 
 #include <thread>
 

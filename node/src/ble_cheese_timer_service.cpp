@@ -73,6 +73,7 @@ BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer)
     pMessageCharacteristic = pCheeseService->createCharacteristic(
         MessageCharacteristicUUID,
         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    pMessageCharacteristic->setValue("Inital Message");
     /* BLE CUD: Characteristic User Description (0x2901) */
     BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
     pBLE2901->setValue("Message");
