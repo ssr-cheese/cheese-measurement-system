@@ -18,7 +18,8 @@
 class BLECheeseTimerService {
 public:
   static const BLEUUID ServiceUUID;
-  static const BLEUUID DataCharacteristicUUID;
+  static const BLEUUID TimeCharacteristicUUID;
+  static const BLEUUID MessageCharacteristicUUID;
 
 public:
   /**
@@ -28,16 +29,22 @@ public:
   BLECheeseTimerService(BLEServer *pServer);
   /**
    * @brief Set the Value object
-   * @param value passed time?
+   * @param value passed time
    */
-  void setValue(uint32_t value);
+  void setPassedTime(uint32_t value);
   /**
    * @brief BLE notify the value
    */
   void notify();
+  /**
+   * @brief notify the message
+   * @param msg string (utf-8)
+   */
+  void notifyMessage(std::string msg);
 
 protected:
   BLEServer *pServer;
   BLEService *pCheeseService;
-  BLECharacteristic *pCheeseCharacteristic;
+  BLECharacteristic *pTimeCharacteristic;
+  BLECharacteristic *pMessageCharacteristic;
 };

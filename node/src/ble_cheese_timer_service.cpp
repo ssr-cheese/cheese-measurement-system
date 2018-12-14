@@ -21,54 +21,81 @@
 const BLEUUID BLECheeseTimerService::ServiceUUID =
     BLEUUID("e2830000-fdb1-11e8-8eb2-f2801f1b9fd1");
 
-const BLEUUID BLECheeseTimerService::DataCharacteristicUUID =
+const BLEUUID BLECheeseTimerService::TimeCharacteristicUUID =
     BLEUUID("e2830001-fdb1-11e8-8eb2-f2801f1b9fd1");
+
+const BLEUUID BLECheeseTimerService::MessageCharacteristicUUID =
+    BLEUUID("e2830002-fdb1-11e8-8eb2-f2801f1b9fd1");
 
 BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer)
     : pServer(pServer) {
   /* Cheese Timer Service */
   pCheeseService = pServer->createService(ServiceUUID);
-  /* Cheese Timer Characteristic */
-  pCheeseCharacteristic = pCheeseService->createCharacteristic(
-      DataCharacteristicUUID,
-      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-  /* setup event callback */
-  class CheeseCharacteristicCallbacks : public BLECharacteristicCallbacks {
-  public:
-    CheeseCharacteristicCallbacks() {}
-    virtual void onRead(BLECharacteristic *pCharacteristic) override {
-      logi << pCharacteristic->toString() << std::endl;
-    }
-    virtual void onWrite(BLECharacteristic *pCharacteristic) override {
-      logi << pCharacteristic->toString() << std::endl;
-    }
-  };
-  pCheeseCharacteristic->setCallbacks(new CheeseCharacteristicCallbacks());
-  /* BLE CUD: Characteristic User Description (0x2901) */
-  BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
-  pBLE2901->setValue("CheeseTimerData");
-  pCheeseCharacteristic->addDescriptor(pBLE2901);
-  /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
-  BLE2902 *pBLE2902 = new BLE2902();
-  class BLE2902Callback : public BLEDescriptorCallbacks {
-  public:
-    BLE2902Callback() {}
-    virtual void onWrite(BLEDescriptor *pDescriptor) override {
-      logi << pDescriptor->toString() << std::endl;
-    }
-  };
-  pBLE2902->setCallbacks(new BLE2902Callback());
-  pCheeseCharacteristic->addDescriptor(pBLE2902);
-  /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
-  BLE2904 *pBLE2904 = new BLE2904();
-  pBLE2904->setFormat(BLE2904::FORMAT_UINT32);
-  pCheeseCharacteristic->addDescriptor(pBLE2904);
+  {
+    /* Cheese Timer Characteristic */
+    pTimeCharacteristic = pCheeseService->createCharacteristic(
+        TimeCharacteristicUUID,
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    /* setup event callback */
+    class CheeseCharacteristicCallbacks : public BLECharacteristicCallbacks {
+    public:
+      CheeseCharacteristicCallbacks() {}
+      virtual void onRead(BLECharacteristic *pCharacteristic) override {
+        logi << pCharacteristic->toString() << std::endl;
+      }
+      virtual void onWrite(BLECharacteristic *pCharacteristic) override {
+        logi << pCharacteristic->toString() << std::endl;
+      }
+    };
+    pTimeCharacteristic->setCallbacks(new CheeseCharacteristicCallbacks());
+    /* BLE CUD: Characteristic User Description (0x2901) */
+    BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
+    pBLE2901->setValue("PassedTime");
+    pTimeCharacteristic->addDescriptor(pBLE2901);
+    /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
+    BLE2902 *pBLE2902 = new BLE2902();
+    class BLE2902Callback : public BLEDescriptorCallbacks {
+    public:
+      BLE2902Callback() {}
+      virtual void onWrite(BLEDescriptor *pDescriptor) override {
+        logi << pDescriptor->toString() << std::endl;
+      }
+    };
+    pBLE2902->setCallbacks(new BLE2902Callback());
+    pTimeCharacteristic->addDescriptor(pBLE2902);
+    /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
+    BLE2904 *pBLE2904 = new BLE2904();
+    pBLE2904->setFormat(BLE2904::FORMAT_UINT32);
+    pTimeCharacteristic->addDescriptor(pBLE2904);
+  }
+  {
+    /* Message Characteristic */
+    pMessageCharacteristic = pCheeseService->createCharacteristic(
+        MessageCharacteristicUUID,
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+    /* BLE CUD: Characteristic User Description (0x2901) */
+    BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
+    pBLE2901->setValue("Message");
+    pMessageCharacteristic->addDescriptor(pBLE2901);
+    /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
+    BLE2902 *pBLE2902 = new BLE2902();
+    pMessageCharacteristic->addDescriptor(pBLE2902);
+    /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
+    BLE2904 *pBLE2904 = new BLE2904();
+    pBLE2904->setFormat(BLE2904::FORMAT_UTF8);
+    pMessageCharacteristic->addDescriptor(pBLE2904);
+  }
   /* start service */
   pCheeseService->start();
 }
 
-void BLECheeseTimerService::setValue(uint32_t value) {
-  pCheeseCharacteristic->setValue(value);
+void BLECheeseTimerService::setPassedTime(uint32_t value) {
+  pTimeCharacteristic->setValue(value);
 }
 
-void BLECheeseTimerService::notify() { pCheeseCharacteristic->notify(); }
+void BLECheeseTimerService::notify() { pTimeCharacteristic->notify(); }
+
+void BLECheeseTimerService::notifyMessage(std::string msg) {
+  pMessageCharacteristic->setValue(msg);
+  pMessageCharacteristic->notify();
+}
