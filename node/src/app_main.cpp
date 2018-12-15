@@ -27,6 +27,8 @@
 #include "app_config.h"
 #include "app_log.h"
 
+/* No Global Variable */
+
 extern "C" void app_main() {
   /* Boot Message */
   logi << "Cheese Timer Node" << std::endl;
