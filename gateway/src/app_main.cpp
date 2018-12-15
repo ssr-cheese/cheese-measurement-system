@@ -37,6 +37,10 @@ extern "C" void app_main() {
   /* BLE Initialization */
   BLEDevice::init("Cheese Timer Gateway");
 
+  /* BLE Advertising */
+  BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
+  pBLEAdvertising->start();
+
   /* BLE Scan */
   BLEAdvertisedDevice advertisedDevice;
   {
@@ -86,26 +90,10 @@ extern "C" void app_main() {
       new BLEBatteryServiceClient(
           pClient, [](uint8_t level) { logi << (int)level << std::endl; });
 
-  /* BLE Remote Service: CCMS */
-  BLERemoteService *pBLECheeseService =
-      pClient->getService(BLECheeseTimerService::ServiceUUID);
-  std::cout << pBLECheeseService->toString() << std::endl;
-  /* BLE Remote Characteristic */
-  BLERemoteCharacteristic *pBLECheeseData =
-      pBLECheeseService->getCharacteristic(
-          BLECheeseTimerService::TimeCharacteristicUUID);
-  std::cout << pBLECheeseService->toString() << std::endl;
-  /* setup notify callback */
-  pBLECheeseData->registerForNotify(
-      [](BLERemoteCharacteristic *pBLECheeseService, uint8_t *pData,
-         size_t length, bool isNotify) {
-        logi << pBLECheeseService->toString() << std::endl;
-        logi << "Length:" << length << std::endl;
-      });
-
-  /* BLE Advertising */
-  BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
-  pBLEAdvertising->start();
+  /* GATT Cheese Timer Service */
+  BLECheeseTimerServiceClient *pBLECheeseTimerServiceClient
+      __attribute__((unused)) = new BLECheeseTimerServiceClient(
+          pClient, [](uint32_t timer) { logi << (int)timer << std::endl; });
 
   /* Main Loop */
   while (1) {
