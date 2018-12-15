@@ -16,6 +16,7 @@
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <Thread.h>
+#include <driver/gpio.h>
 #include <nvs_flash.h>
 
 #include <VL53L0X.h>
@@ -32,6 +33,10 @@ extern "C" void app_main() {
 
   /* NVS flash initialization */
   nvs_flash_init();
+
+  /* GPIO Initialization */
+  gpio_set_direction(PinSensorStatusLED, GPIO_MODE_OUTPUT);
+  gpio_set_level(PinSensorStatusLED, 0);
 
   /* Battery Monitor */
   BatteryMonitor *pBatteryMonitor = new BatteryMonitor(
@@ -99,6 +104,7 @@ extern "C" void app_main() {
       if (range_mm < Threshold_mm) {
         if (!passing) {
           passing = true;
+          gpio_set_level(PinSensorStatusLED, 1);
           logd << "New Passed: " << range_mm << " [mm]" << std::endl;
           uint32_t value = range_mm;
           // 一時的に，時刻ではなく測定データを送信している．
@@ -109,6 +115,7 @@ extern "C" void app_main() {
         }
       } else {
         passing = false;
+        gpio_set_level(PinSensorStatusLED, 0);
       }
     }
   });
