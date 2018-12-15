@@ -20,13 +20,19 @@ public:
   static const BLEUUID ServiceUUID;
   static const BLEUUID TimeCharacteristicUUID;
   static const BLEUUID MessageCharacteristicUUID;
+  static const BLEUUID PositionCharacteristicUUID;
+
+  enum class Position : uint8_t {
+    Start,
+    Goal,
+  };
 
 public:
   /**
    * @brief Construct a new BLECheeseTimerService object
    * @param pServer should not be nullptr
    */
-  BLECheeseTimerService(BLEServer *pServer);
+  BLECheeseTimerService(BLEServer *pServer, Position pos = Position::Start);
   /**
    * @brief Set the Value object
    * @param value passed time
@@ -41,10 +47,16 @@ public:
    * @param msg string (utf-8)
    */
   void notifyMessage(std::string msg);
+  /**
+   * @brief Set the Position object
+   * @param pos New Position
+   */
+  void setPosition(Position pos);
 
 protected:
   BLEServer *pServer;
   BLEService *pCheeseService;
   BLECharacteristic *pTimeCharacteristic;
   BLECharacteristic *pMessageCharacteristic;
+  BLECharacteristic *pPositionCharacteristic;
 };
