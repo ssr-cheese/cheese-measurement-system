@@ -61,8 +61,8 @@ public:
         BLEBatteryService::BatteryLevelCharacteristicUUID);
     /* setup notify callback */
     pBatteryLevelCharacteristic->registerForNotify(
-        [notifyCallback](BLERemoteCharacteristic *pService, uint8_t *pData,
-                         size_t length, bool isNotify) {
+        [notifyCallback](BLERemoteCharacteristic *pCharacteristic,
+                         uint8_t *pData, size_t length, bool isNotify) {
           if (length < 1) {
             logw << "no Battery Level data" << std::endl;
             return;

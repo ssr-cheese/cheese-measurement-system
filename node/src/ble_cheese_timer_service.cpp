@@ -92,13 +92,17 @@ BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer, Position pos)
   {
     /* Position Characteristic */
     pPositionCharacteristic = pCheeseService->createCharacteristic(
-        PositionCharacteristicUUID,
-        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+        PositionCharacteristicUUID, BLECharacteristic::PROPERTY_READ |
+                                        BLECharacteristic::PROPERTY_NOTIFY |
+                                        BLECharacteristic::PROPERTY_WRITE);
     pPositionCharacteristic->setValue((uint8_t *)(&pos), sizeof(Position));
     /* BLE CUD: Characteristic User Description (0x2901) */
     BLEDescriptor *pBLE2901 = new BLEDescriptor(static_cast<uint16_t>(0x2901));
     pBLE2901->setValue("Position");
     pPositionCharacteristic->addDescriptor(pBLE2901);
+    /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
+    BLE2902 *pBLE2902 = new BLE2902();
+    pPositionCharacteristic->addDescriptor(pBLE2902);
     /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
     BLE2904 *pBLE2904 = new BLE2904();
     pBLE2904->setFormat(BLE2904::FORMAT_UINT8);

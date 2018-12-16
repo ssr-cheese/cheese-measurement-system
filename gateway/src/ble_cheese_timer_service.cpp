@@ -102,7 +102,7 @@ BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer, Position pos)
     pPositionCharacteristic->addDescriptor(pBLE2901);
     /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
     BLE2902 *pBLE2902 = new BLE2902();
-    pMessageCharacteristic->addDescriptor(pBLE2902);
+    pPositionCharacteristic->addDescriptor(pBLE2902);
     /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
     BLE2904 *pBLE2904 = new BLE2904();
     pBLE2904->setFormat(BLE2904::FORMAT_UINT8);

@@ -83,6 +83,9 @@ extern "C" void app_main() {
     // vTaskDelay(portMAX_DELAY);
   }
 
+  /* Setup Complete */
+  pCheeseService->notifyMessage("Node Setup Completed :)");
+
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
     const auto period = std::chrono::seconds(3);

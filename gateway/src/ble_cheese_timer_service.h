@@ -88,15 +88,14 @@ public:
           timer = (timer << 8) | pData[2];
           timer = (timer << 8) | pData[1];
           timer = (timer << 8) | pData[0];
-          logi << "Timer Data: " << (int)timer << std::endl;
+          logi << "Timer: " << (int)timer << std::endl;
           if (notifyCallback != nullptr)
             notifyCallback(timer);
         });
     /* Message Characteristic */
     pMessageCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::MessageCharacteristicUUID);
-    // std::string msg = pMessageCharacteristic->readValue();
-    // logi << "Message: " << msg << std::endl;
+    // logi << "Message: " << readMessage() << std::endl;
     pMessageCharacteristic->registerForNotify(
         [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
            size_t length, bool isNotify) {
@@ -105,15 +104,29 @@ public:
     /* Position Characteristic */
     pPositionCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::PositionCharacteristicUUID);
-    // BLECheeseTimerService::Position *pos =
-    //     reinterpret_cast<BLECheeseTimerService::Position *>(
-    //         pPositionCharacteristic->readRawData());
-    // logi << "Position: " << static_cast<int>(*pos) << std::endl;
+    // logi << "Position: " << static_cast<int>(readPosition()) << std::endl;
     pPositionCharacteristic->registerForNotify(
         [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
            size_t length, bool isNotify) {
           logi << "Position: " << (int)pData[0] << std::endl;
         });
+  }
+
+  uint32_t readTimer() {
+    pTimerCharacteristic->readValue();
+    uint32_t timer = pTimerCharacteristic->readUInt32();
+    return timer;
+  }
+  std::string readMessage() {
+    std::string msg = pMessageCharacteristic->readValue();
+    return msg;
+  }
+  BLECheeseTimerService::Position readPosition() {
+    pPositionCharacteristic->readValue();
+    BLECheeseTimerService::Position *pos =
+        reinterpret_cast<BLECheeseTimerService::Position *>(
+            pPositionCharacteristic->readRawData());
+    return *pos;
   }
 
 protected:
