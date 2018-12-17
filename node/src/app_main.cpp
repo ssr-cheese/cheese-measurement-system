@@ -10,6 +10,7 @@
  */
 
 #include "battery_monitor.h"
+#include "ble_app_callback.h"
 #include "ble_battery_service.h"
 #include "ble_cheese_timer_service.h"
 
@@ -25,6 +26,7 @@
 #include <thread>
 
 #include "app_config.h"
+#include "app_led.h"
 #include "app_log.h"
 
 /* No Global Variable */
@@ -37,8 +39,9 @@ extern "C" void app_main() {
   nvs_flash_init();
 
   /* GPIO Initialization */
-  gpio_set_direction(PinSensorStatusLED, GPIO_MODE_OUTPUT);
-  gpio_set_level(PinSensorStatusLED, 0);
+  LED *pSensorStatusLED = new LED(PinSensorStatusLED);
+  LED *pErrorStatusLED = new LED(PinErrorStatusLED);
+  pErrorStatusLED->blink();
 
   /* Battery Monitor */
   BatteryMonitor *pBatteryMonitor = new BatteryMonitor(
@@ -50,17 +53,12 @@ extern "C" void app_main() {
   /* BLE Server */
   BLEServer *pServer = BLEDevice::createServer();
   /* setup event callback*/
-  class MyBLEServerCallbacks : public BLEServerCallbacks {
-  public:
-    MyBLEServerCallbacks() {}
-    virtual void onConnect(BLEServer *pServer) override {
-      BLEDevice::getAdvertising()->stop();
-    }
-    virtual void onDisconnect(BLEServer *pServer) override {
-      BLEDevice::getAdvertising()->start();
-    }
-  };
-  pServer->setCallbacks(new MyBLEServerCallbacks());
+  pServer->setCallbacks(new AppBLEServerCallbacks(
+      [&](BLEServer *pServer) {
+        BLEDevice::getAdvertising()->stop();
+        pErrorStatusLED->off();
+      },
+      [&](BLEServer *pServer) { pErrorStatusLED->blink(); }));
 
   /* Cheese Timer Service */
   BLECheeseTimerService *pCheeseService = new BLECheeseTimerService(pServer);
@@ -80,7 +78,8 @@ extern "C" void app_main() {
   tof.i2cMasterInit();
   if (!tof.init()) {
     pCheeseService->notifyMessage("Failed to Initialize ToF sensor :(");
-    // vTaskDelay(portMAX_DELAY);
+    pErrorStatusLED->on();
+    vTaskDelay(portMAX_DELAY);
   }
 
   /* Setup Complete */
@@ -109,7 +108,7 @@ extern "C" void app_main() {
       if (range_mm < Threshold_mm) {
         if (!passing) {
           passing = true;
-          gpio_set_level(PinSensorStatusLED, 1);
+          pSensorStatusLED->on();
           logd << "New Passed: " << range_mm << " [mm]" << std::endl;
           uint32_t value = range_mm;
           // 一時的に，時刻ではなく測定データを送信している．
@@ -120,7 +119,7 @@ extern "C" void app_main() {
         }
       } else {
         passing = false;
-        gpio_set_level(PinSensorStatusLED, 0);
+        pSensorStatusLED->off();
       }
     }
   });

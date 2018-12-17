@@ -14,3 +14,4 @@ static constexpr float BatteryMaxVoltage = 6.0f;
  */
 
 static constexpr gpio_num_t PinSensorStatusLED = GPIO_NUM_27;
+static constexpr gpio_num_t PinErrorStatusLED = GPIO_NUM_26;
