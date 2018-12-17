@@ -26,13 +26,24 @@
 #endif
 #include <chrono>
 
+#include "app_config.h"
+#include "app_led.h"
 #include "app_log.h"
 #include "ble_battery_service.h"
 #include "ble_cheese_timer_service.h"
 
 extern "C" void app_main() {
+  /* Boot Message */
+  logi << "Cheese Timer Node" << std::endl;
+
   /* NVS flash initialization */
   nvs_flash_init();
+
+  /* GPIO Initialization */
+  LED *pStartLED = new LED(PinStartLED);
+  LED *pGoalLED = new LED(PinGoalLED);
+  pStartLED->blink();
+  pGoalLED->blink();
 
   /* BLE Initialization */
   BLEDevice::init("Cheese Timer Gateway");
@@ -55,9 +66,8 @@ extern "C" void app_main() {
           : pAdvertisedDevice(pAdvertisedDevice),
             isTargetDevice(isTargetDevice) {}
       virtual void onResult(BLEAdvertisedDevice advertisedDevice) override {
-        logi << "onResult(): " << advertisedDevice.toString() << std::endl;
         if (isTargetDevice(&advertisedDevice)) {
-          logi << "device found" << std::endl;
+          logi << "Device Found: " << advertisedDevice.toString() << std::endl;
           *pAdvertisedDevice = advertisedDevice;
           BLEDevice::getScan()->stop();
         }
