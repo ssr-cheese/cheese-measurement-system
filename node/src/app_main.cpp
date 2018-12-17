@@ -96,6 +96,8 @@ extern "C" void app_main() {
           pBatteryMonitor->calcBatteryLevel(pBatteryMonitor->getVoltage());
       pBatteryService->setBatteryLevel(level);
       pBatteryService->notify();
+      if (level < 10)
+        pSensorStatusLED->blink();
     }
   });
 

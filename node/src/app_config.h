@@ -5,8 +5,10 @@
  */
 static constexpr adc1_channel_t BatteryAdcChannel =
     ADC1_CHANNEL_7; //< ADC1_Channel7 is GPIO35
-static constexpr float BatteryMinVoltage = 4.8f;
-static constexpr float BatteryMaxVoltage = 6.0f;
+// static constexpr float BatteryMinVoltage = 4.8f;
+// static constexpr float BatteryMaxVoltage = 6.0f;
+static constexpr float BatteryMinVoltage = 3.6f;
+static constexpr float BatteryMaxVoltage = 4.2f;
 
 /**
  * @brief LED Mapping
