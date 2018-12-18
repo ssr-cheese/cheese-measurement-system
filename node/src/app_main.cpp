@@ -46,8 +46,18 @@ extern "C" void app_main() {
   BatteryMonitor *pBatteryMonitor = new BatteryMonitor(
       BatteryAdcChannel, BatteryMinVoltage, BatteryMaxVoltage);
 
+  /* Determine Position, Start or Goal */
+  gpio_set_direction(PinPositionSelector, GPIO_MODE_INPUT);
+  gpio_pullup_en(PinPositionSelector);
+  int sw = gpio_get_level(PinPositionSelector);
+  BLECheeseTimerService::Position position =
+      sw == 0 ? BLECheeseTimerService::Position::Start
+              : BLECheeseTimerService::Position::Goal;
+  std::string positionString = BLECheeseTimerService::toString(position);
+  logi << "Position: " << positionString << std::endl;
+
   /* BLE Initialization */
-  BLEDevice::init(DeviceName);
+  BLEDevice::init(std::string{DeviceName} + " " + positionString);
 
   /* BLE Server */
   BLEServer *pServer = BLEDevice::createServer();
@@ -60,7 +70,8 @@ extern "C" void app_main() {
       [&](BLEServer *pServer) { pErrorStatusLED->blink(); }));
 
   /* Cheese Timer Service */
-  BLECheeseTimerService *pCheeseService = new BLECheeseTimerService(pServer);
+  BLECheeseTimerService *pCheeseService =
+      new BLECheeseTimerService(pServer, position);
 
   /* Battery Service */
   BLEBatteryService *pBatteryService = new BLEBatteryService(pServer);

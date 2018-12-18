@@ -32,3 +32,8 @@ static constexpr float BatteryMaxVoltage = 4.2f;
  */
 static constexpr gpio_num_t PinSensorStatusLED = GPIO_NUM_27;
 static constexpr gpio_num_t PinErrorStatusLED = GPIO_NUM_26;
+
+/**
+ * @brief Start or Goal select switch
+ */
+static constexpr gpio_num_t PinPositionSelector = GPIO_NUM_23;
