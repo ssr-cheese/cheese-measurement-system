@@ -29,6 +29,7 @@
 #include "app_config.h"
 #include "app_led.h"
 #include "app_log.h"
+#include "ble_app_callback.h"
 #include "ble_battery_service.h"
 #include "ble_cheese_timer_service.h"
 
@@ -57,33 +58,15 @@ extern "C" void app_main() {
   {
     BLEScan *pScan = BLEDevice::getScan();
     /* set scan callback */
-    class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
-    public:
-      MyAdvertisedDeviceCallbacks(
-          BLEAdvertisedDevice *pAdvertisedDevice,
-          std::function<bool(BLEAdvertisedDevice *pAdvertisedDevice)>
-              isTargetDevice)
-          : pAdvertisedDevice(pAdvertisedDevice),
-            isTargetDevice(isTargetDevice) {}
-      virtual void onResult(BLEAdvertisedDevice advertisedDevice) override {
-        if (isTargetDevice(&advertisedDevice)) {
-          logi << "Device Found: " << advertisedDevice.toString() << std::endl;
-          *pAdvertisedDevice = advertisedDevice;
-          BLEDevice::getScan()->stop();
-        }
-      }
-
-    private:
-      BLEAdvertisedDevice *pAdvertisedDevice;
-      std::function<bool(BLEAdvertisedDevice *pAdvertisedDevice)>
-          isTargetDevice;
-    };
-    MyAdvertisedDeviceCallbacks advertisedDeviceCallbacks(
-        &advertisedDevice, [](BLEAdvertisedDevice *pAdvertisedDevice) {
-          return pAdvertisedDevice->isAdvertisingService(
-              BLECheeseTimerService::ServiceUUID);
-        });
-    pScan->setAdvertisedDeviceCallbacks(&advertisedDeviceCallbacks);
+    pScan->setAdvertisedDeviceCallbacks(
+        new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
+          if (dev.isAdvertisingService(BLECheeseTimerService::ServiceUUID)) {
+            logi << "Device Found: " << advertisedDevice.toString()
+                 << std::endl;
+            advertisedDevice = dev;
+            BLEDevice::getScan()->stop();
+          }
+        }));
     /* conduct scan */
     // this blocks until the target device is found
     BLEScanResults scanResults = pScan->start(60);

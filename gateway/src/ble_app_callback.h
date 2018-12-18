@@ -24,3 +24,17 @@ private:
   std::function<void(BLEServer *)> onConnectCallback;
   std::function<void(BLEServer *)> onDisconnectCallback;
 };
+
+class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+public:
+  MyAdvertisedDeviceCallbacks(
+      std::function<void(BLEAdvertisedDevice)> onResultCallback)
+      : onResultCallback(onResultCallback) {}
+  virtual void onResult(BLEAdvertisedDevice advertisedDevice) override {
+    if (onResultCallback != nullptr)
+      onResultCallback(advertisedDevice);
+  }
+
+private:
+  std::function<void(BLEAdvertisedDevice)> onResultCallback;
+};
