@@ -12,13 +12,16 @@
 
 #include <BLECharacteristic.h>
 #include <BLEClient.h>
+#include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEService.h>
 #include <BLEUUID.h>
+#include <thread.h>
 
 #include <functional>
 
 #include "app_log.h"
+#include "ble_callback_utils.h"
 
 class BLECheeseTimerService {
 public:
@@ -131,6 +134,56 @@ public:
         reinterpret_cast<BLECheeseTimerService::Position *>(
             pPositionCharacteristic->readRawData());
     return *pos;
+  }
+  static BLEAdvertisedDevice
+  findDevice(BLECheeseTimerService::Position target_position) {
+    // static FreeRTOS::Semaphore scan_semaphore;
+    // scan_semaphore.take();
+    BLEScan *pScan = BLEDevice::getScan();
+    BLEAdvertisedDevice foundDevice;
+    bool deviceFound = false;
+    /* set scan callback */
+    pScan->setAdvertisedDeviceCallbacks(
+        new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
+          if (dev.getServiceDataUUID().equals(
+                  BLECheeseTimerService::ServiceUUID)) {
+            std::string data = dev.getServiceData();
+            BLECheeseTimerService::Position position =
+                static_cast<BLECheeseTimerService::Position>((int)data[0]);
+            if (position == target_position) {
+              logi << "Device Found: " << dev.toString() << std::endl;
+              logi << "Position: " << BLECheeseTimerService::toString(position)
+                   << std::endl;
+              foundDevice = dev;
+              deviceFound = true;
+              BLEDevice::getScan()->stop();
+            }
+          }
+        }));
+    while (1) {
+      /* conduct scan */
+      logi << "Scan: " << BLECheeseTimerService::toString(target_position)
+           << std::endl;
+      // this blocks until the target device is found
+      BLEScanResults scanResults = pScan->start(1);
+      /* unset scan callback */
+      if (deviceFound) {
+        pScan->setAdvertisedDeviceCallbacks(nullptr);
+        // scan_semaphore.give();
+        return foundDevice;
+      }
+    }
+  }
+  static void update_params(esp_bd_addr_t *addr) {
+    /* Update Connection Parameters */
+    logi << "update connection params" << std::endl;
+    esp_ble_conn_update_params_t conn_param;
+    memcpy(conn_param.bda, *addr, sizeof(esp_bd_addr_t));
+    conn_param.min_int = 50 / 1.25f;
+    conn_param.max_int = 30 / 1.25f;
+    conn_param.latency = 0;
+    conn_param.timeout = 100;
+    ESP_ERROR_CHECK(esp_ble_gap_update_conn_params(&conn_param));
   }
 
 protected:

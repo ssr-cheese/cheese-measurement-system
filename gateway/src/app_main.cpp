@@ -49,6 +49,7 @@ extern "C" void app_main() {
   /* BLE Initialization */
   FreeRTOS::sleep(3000);
   BLEDevice::init("Cheese Timer Gateway");
+  BLEDevice::setPower(ESP_PWR_LVL_P4);
 
   /* BLE Advertising */
   BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
@@ -67,13 +68,29 @@ extern "C" void app_main() {
       pClient->setClientCallbacks(new MyBLEClientCallbacks(
           [&](BLEClient *pClient) {
             logi << "onConnect" << std::endl;
-            pStartLED->on();
             BLECheeseTimerServiceClient::update_params(
                 pClient->getPeerAddress().getNative());
+            /* update status LED */
+            switch (position) {
+            case BLECheeseTimerService::Position::Start:
+              pStartLED->on();
+              break;
+            case BLECheeseTimerService::Position::Goal:
+              pGoalLED->on();
+              break;
+            }
           },
           [&](BLEClient *pClient) {
             logi << "onDisconnect" << std::endl;
-            pStartLED->blink();
+            /* update status LED */
+            switch (position) {
+            case BLECheeseTimerService::Position::Start:
+              pStartLED->blink();
+              break;
+            case BLECheeseTimerService::Position::Goal:
+              pGoalLED->blink();
+              break;
+            }
             reconnect_semaphore.give();
           }));
       pClient->connect(pDevice);
@@ -94,12 +111,10 @@ extern "C" void app_main() {
   };
 
   /* handle devices */
-  handleDevice(BLECheeseTimerService::Position::Start);
-
-  /* Main Loop */
-  while (1) {
-    FreeRTOS::sleep(2222);
-  }
+  FreeRTOSpp::Thread deviceStartThread(
+      [&]() { handleDevice(BLECheeseTimerService::Position::Start); });
+  // FreeRTOSpp::Thread deviceGoalThread(
+  //     [&]() { handleDevice(BLECheeseTimerService::Position::Goal); });
 
   /* sleep forever */
   vTaskDelay(portMAX_DELAY);

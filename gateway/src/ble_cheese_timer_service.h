@@ -137,6 +137,8 @@ public:
   }
   static BLEAdvertisedDevice
   findDevice(BLECheeseTimerService::Position target_position) {
+    // static FreeRTOS::Semaphore scan_semaphore;
+    // scan_semaphore.take();
     BLEScan *pScan = BLEDevice::getScan();
     BLEAdvertisedDevice foundDevice;
     bool deviceFound = false;
@@ -167,6 +169,7 @@ public:
       /* unset scan callback */
       if (deviceFound) {
         pScan->setAdvertisedDeviceCallbacks(nullptr);
+        // scan_semaphore.give();
         return foundDevice;
       }
     }
@@ -179,7 +182,7 @@ public:
     conn_param.min_int = 50 / 1.25f;
     conn_param.max_int = 30 / 1.25f;
     conn_param.latency = 0;
-    conn_param.timeout = 10;
+    conn_param.timeout = 100;
     ESP_ERROR_CHECK(esp_ble_gap_update_conn_params(&conn_param));
   }
 
