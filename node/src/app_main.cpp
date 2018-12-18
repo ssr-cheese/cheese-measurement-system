@@ -24,6 +24,15 @@
 
 #include <thread>
 
+// コンパイルエラーを防ぐため， Arduino.h で定義されているマクロをundef
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#include <chrono>
+
 #include "app_config.h"
 #include "app_led.h"
 #include "app_log.h"
@@ -102,7 +111,7 @@ extern "C" void app_main() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    const auto period = std::chrono::seconds(3);
+    const auto period = std::chrono::seconds(10);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
       /* Periodical EXecution */
@@ -127,8 +136,10 @@ extern "C" void app_main() {
           passing = true;
           pSensorStatusLED->on();
           logd << "New Passed: " << range_mm << " [mm]" << std::endl;
-          uint32_t value = range_mm;
-          // 一時的に，時刻ではなく測定データを送信している．
+          uint32_t value =
+              std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::steady_clock::now().time_since_epoch())
+                  .count();
           pCheeseService->setPassedTime(value);
           pCheeseService->notify();
           /* Prevent from chattering */
