@@ -78,9 +78,14 @@ extern "C" void app_main() {
 
   /* BLE Advertising */
   BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
-  /* add service UUID to display */
-  pBLEAdvertising->addServiceUUID(BLECheeseTimerService::ServiceUUID);
-  pBLEAdvertising->start();
+  {
+    BLEAdvertisementData advData;
+    std::string data;
+    data += static_cast<const char>(position);
+    advData.setServiceData(BLECheeseTimerService::ServiceUUID, data);
+    pBLEAdvertising->setAdvertisementData(advData);
+    pBLEAdvertising->start();
+  }
 
   /* ToF Sensor Initialization */
   VL6180X tof;

@@ -47,6 +47,7 @@ extern "C" void app_main() {
   pGoalLED->blink();
 
   /* BLE Initialization */
+  FreeRTOS::sleep(1000);
   BLEDevice::init("Cheese Timer Gateway");
 
   /* BLE Advertising */
@@ -60,8 +61,14 @@ extern "C" void app_main() {
     /* set scan callback */
     pScan->setAdvertisedDeviceCallbacks(
         new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
-          if (dev.isAdvertisingService(BLECheeseTimerService::ServiceUUID)) {
+          if (dev.getServiceDataUUID().equals(
+                  BLECheeseTimerService::ServiceUUID)) {
             logi << "Device Found: " << advertisedDevice.toString()
+                 << std::endl;
+            std::string data = dev.getServiceData();
+            BLECheeseTimerService::Position position =
+                static_cast<BLECheeseTimerService::Position>((int)data[0]);
+            logi << "Position: " << BLECheeseTimerService::toString(position)
                  << std::endl;
             advertisedDevice = dev;
             BLEDevice::getScan()->stop();
