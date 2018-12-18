@@ -12,6 +12,11 @@
 #include <driver/gpio.h>
 
 /**
+ * @brief name of this device
+ */
+static constexpr const char *DeviceName = "Cheese Timer Node";
+
+/**
  * @brief LED Mapping
  */
 static constexpr gpio_num_t PinStartLED = GPIO_NUM_27;

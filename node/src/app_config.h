@@ -13,6 +13,11 @@
 #include <driver/gpio.h>
 
 /**
+ * @brief name of this device
+ */
+static constexpr const char *DeviceName = "Cheese Timer Node";
+
+/**
  * @brief Battery Monitor Parameters
  */
 static constexpr adc1_channel_t BatteryAdcChannel =

@@ -17,7 +17,6 @@
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <Thread.h>
-#include <driver/gpio.h>
 #include <nvs_flash.h>
 
 #include <VL53L0X.h>
@@ -33,7 +32,7 @@
 
 extern "C" void app_main() {
   /* Boot Message */
-  logi << "Cheese Timer Node" << std::endl;
+  logi << "Hello, this is " << DeviceName << "." << std::endl;
 
   /* NVS flash initialization */
   nvs_flash_init();
@@ -48,7 +47,7 @@ extern "C" void app_main() {
       BatteryAdcChannel, BatteryMinVoltage, BatteryMaxVoltage);
 
   /* BLE Initialization */
-  BLEDevice::init("Cheese Timer Node");
+  BLEDevice::init(DeviceName);
 
   /* BLE Server */
   BLEServer *pServer = BLEDevice::createServer();

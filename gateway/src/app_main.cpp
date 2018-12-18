@@ -35,7 +35,7 @@
 
 extern "C" void app_main() {
   /* Boot Message */
-  logi << "Cheese Timer Node" << std::endl;
+  logi << "Hello, this is " << DeviceName << "." << std::endl;
 
   /* NVS flash initialization */
   nvs_flash_init();
