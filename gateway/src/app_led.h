@@ -1,3 +1,13 @@
+/**
+ * @file app_led.h
+ * @author Ryotaro Onuki (kerikun11+github@gmail.com)
+ * @brief LEDの点灯・点滅マネージャー．キューで渡し，バックグラウンドで駆動．
+ * @version 0.1
+ * @date 2018-12-18
+ *
+ * @copyright Copyright (c) 2018
+ *
+ */
 #pragma once
 
 #include <driver/gpio.h>
@@ -7,16 +17,8 @@
 
 class LED {
 public:
-  enum Type {
-    ON,
-    OFF,
-    Blink,
-  };
-
-public:
   LED(gpio_num_t pin, int queue_size = 5) : pin(pin) {
     gpio_set_direction(pin, GPIO_MODE_OUTPUT);
-    write(OFF);
     playList = xQueueCreate(queue_size, sizeof(struct QueueItem));
     xTaskCreate([](void *obj) { static_cast<LED *>(obj)->task(); }, "LED", 1024,
                 this, 0, &pxCreatedTask);
@@ -47,6 +49,11 @@ private:
   QueueHandle_t playList = NULL;
   TaskHandle_t pxCreatedTask = NULL;
 
+  enum Type {
+    ON,
+    OFF,
+    Blink,
+  };
   struct QueueItem {
     enum Type type;
   };

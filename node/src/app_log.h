@@ -1,40 +1,43 @@
+/**
+ * @file app_log.h
+ * @author Ryotaro Onuki (kerikun11+github@gmail.com)
+ * @brief this provides logging formats
+ * @version 0.1
+ * @date 2018-12-18
+ *
+ * @copyright Copyright (c) 2018
+ *
+ */
 #pragma once
 
 #include <iomanip>
 #include <iostream>
 
-#if 1
-#define logd                                                                   \
-  (std::cout << "[D] " << std::setw(8) << std::setfill(' ')                    \
+#define log_com(c)                                                             \
+  (std::cout << "[" c "] " << std::setw(8) << std::setfill(' ')                \
              << xTaskGetTickCount() * portTICK_PERIOD_MS << " [" << __FILE__   \
              << ":" << __LINE__ << "] [" << __func__ << "()] ")
+
+#if 1
+#define logd log_com("D")
 #else
 #define logd
 #endif
 
 #if 1
-#define logi                                                                   \
-  (std::cout << "[I] " << std::setw(8) << std::setfill(' ')                    \
-             << xTaskGetTickCount() * portTICK_PERIOD_MS << " [" << __FILE__   \
-             << ":" << __LINE__ << "] [" << __func__ << "()] ")
+#define logi log_com("I")
 #else
 #define logi
 #endif
 
 #if 1
-#define logw                                                                   \
-  (std::cout << "[W] " << std::setw(8) << std::setfill(' ')                    \
-             << xTaskGetTickCount() * portTICK_PERIOD_MS << " [" << __FILE__   \
-             << ":" << __LINE__ << "] [" << __func__ << "()] ")
+#define logw log_com("W")
 #else
 #define logw
 #endif
 
 #if 1
-#define loge                                                                   \
-  (std::cout << "[E] " << std::setw(8) << std::setfill(' ')                    \
-             << xTaskGetTickCount() * portTICK_PERIOD_MS << " [" << __FILE__   \
-             << ":" << __LINE__ << "] [" << __func__ << "()] ")
+#define loge log_com("E")
 #else
 #define loge
 #endif

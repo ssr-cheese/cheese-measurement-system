@@ -1,3 +1,13 @@
+/**
+ * @file battery_monitor.h
+ * @author Ryotaro Onuki (kerikun11+github@gmail.com)
+ * @brief バッテリーの電圧を測定し，残量を算出するツール
+ * @version 0.1
+ * @date 2018-12-18
+ *
+ * @copyright Copyright (c) 2018 Ryotaro Onuki
+ *
+ */
 #pragma once
 
 #include <driver/adc.h>

@@ -44,10 +44,10 @@ BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer, Position pos)
     public:
       CheeseCharacteristicCallbacks() {}
       virtual void onRead(BLECharacteristic *pCharacteristic) override {
-        logi << pCharacteristic->toString() << std::endl;
+        logi << "Timer" << std::endl;
       }
       virtual void onWrite(BLECharacteristic *pCharacteristic) override {
-        logi << pCharacteristic->toString() << std::endl;
+        logi << "Timer" << std::endl;
       }
     };
     pTimeCharacteristic->setCallbacks(new CheeseCharacteristicCallbacks());
