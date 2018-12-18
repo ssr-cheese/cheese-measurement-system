@@ -16,7 +16,7 @@
 #include <BLEServer.h>
 #include <BLEService.h>
 #include <BLEUUID.h>
-#include <Thread.h>
+#include <thread.h>
 
 #include <functional>
 
@@ -37,36 +37,6 @@ public:
   static std::string toString(Position pos) {
     static const char *position_string[] = {"Start", "Goal"};
     return position_string[static_cast<int>(pos)];
-  }
-
-  static BLEAdvertisedDevice findDevice(Position target_position) {
-    BLEScan *pScan = BLEDevice::getScan();
-    BLEAdvertisedDevice foundDevice;
-    /* set scan callback */
-    pScan->setAdvertisedDeviceCallbacks(
-        new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
-          if (dev.getServiceDataUUID().equals(
-                  BLECheeseTimerService::ServiceUUID)) {
-            std::string data = dev.getServiceData();
-            BLECheeseTimerService::Position position =
-                static_cast<BLECheeseTimerService::Position>((int)data[0]);
-            if (position == target_position) {
-              logi << "Device Found: " << dev.toString() << std::endl;
-              logi << "Position: " << BLECheeseTimerService::toString(position)
-                   << std::endl;
-              foundDevice = dev;
-              BLEDevice::getScan()->stop();
-            }
-          }
-        }));
-    /* conduct scan */
-    logi << "Scan: " << BLECheeseTimerService::toString(target_position)
-         << std::endl;
-    // this blocks until the target device is found
-    BLEScanResults scanResults = pScan->start(3600 * 24);
-    /* unset scan callback */
-    pScan->setAdvertisedDeviceCallbacks(nullptr);
-    return foundDevice;
   }
 
 public:
@@ -164,6 +134,52 @@ public:
         reinterpret_cast<BLECheeseTimerService::Position *>(
             pPositionCharacteristic->readRawData());
     return *pos;
+  }
+  static BLEAdvertisedDevice
+  findDevice(BLECheeseTimerService::Position target_position) {
+    BLEScan *pScan = BLEDevice::getScan();
+    BLEAdvertisedDevice foundDevice;
+    bool deviceFound = false;
+    /* set scan callback */
+    pScan->setAdvertisedDeviceCallbacks(
+        new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
+          if (dev.getServiceDataUUID().equals(
+                  BLECheeseTimerService::ServiceUUID)) {
+            std::string data = dev.getServiceData();
+            BLECheeseTimerService::Position position =
+                static_cast<BLECheeseTimerService::Position>((int)data[0]);
+            if (position == target_position) {
+              logi << "Device Found: " << dev.toString() << std::endl;
+              logi << "Position: " << BLECheeseTimerService::toString(position)
+                   << std::endl;
+              foundDevice = dev;
+              deviceFound = true;
+              BLEDevice::getScan()->stop();
+            }
+          }
+        }));
+    while (1) {
+      /* conduct scan */
+      logi << "Scan: " << BLECheeseTimerService::toString(target_position)
+           << std::endl;
+      // this blocks until the target device is found
+      BLEScanResults scanResults = pScan->start(1);
+      /* unset scan callback */
+      pScan->setAdvertisedDeviceCallbacks(nullptr);
+      if (deviceFound)
+        return foundDevice;
+    }
+  }
+  static void update_params(esp_bd_addr_t *addr) {
+    /* Update Connection Parameters */
+    logi << "update connection params" << std::endl;
+    esp_ble_conn_update_params_t conn_param;
+    memcpy(conn_param.bda, *addr, sizeof(esp_bd_addr_t));
+    conn_param.min_int = 50 / 1.25f;
+    conn_param.max_int = 30 / 1.25f;
+    conn_param.latency = 0;
+    conn_param.timeout = 10;
+    ESP_ERROR_CHECK(esp_ble_gap_update_conn_params(&conn_param));
   }
 
 protected:

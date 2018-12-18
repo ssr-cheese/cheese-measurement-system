@@ -55,69 +55,46 @@ extern "C" void app_main() {
   pBLEAdvertising->start();
 
   /* BLE Scan */
-  BLEAdvertisedDevice *pDeviceStart = nullptr;
-  pDeviceStart = new BLEAdvertisedDevice();
-  // BLEAdvertisedDevice *pDeviceGoal = nullptr;
-  // pDeviceGoal = new BLEAdvertisedDevice();
-  auto findDeviceByPosition =
-      [&](BLECheeseTimerService::Position target_position) {
-        BLEScan *pScan = BLEDevice::getScan();
-        BLEAdvertisedDevice foundDevice;
-        /* set scan callback */
-        pScan->setAdvertisedDeviceCallbacks(
-            new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
-              if (dev.getServiceDataUUID().equals(
-                      BLECheeseTimerService::ServiceUUID)) {
-                std::string data = dev.getServiceData();
-                BLECheeseTimerService::Position position =
-                    static_cast<BLECheeseTimerService::Position>((int)data[0]);
-                if (position == target_position) {
-                  logi << "Device Found: " << dev.toString() << std::endl;
-                  logi << "Position: "
-                       << BLECheeseTimerService::toString(position)
-                       << std::endl;
-                  foundDevice = dev;
-                  BLEDevice::getScan()->stop();
-                }
-              }
-            }));
-        /* conduct scan */
-        logi << "Scan: " << BLECheeseTimerService::toString(target_position)
-             << std::endl;
-        // this blocks until the target device is found
-        BLEScanResults scanResults = pScan->start(3600 * 24);
-        /* unset scan callback */
-        pScan->setAdvertisedDeviceCallbacks(nullptr);
-        return foundDevice;
-      };
-  *pDeviceStart = findDeviceByPosition(BLECheeseTimerService::Position::Start);
-  // *pDeviceGoal = findDeviceByPosition(BLECheeseTimerService::Position::Goal);
+  auto handleDevice = [&](BLECheeseTimerService::Position position) {
+    FreeRTOS::Semaphore reconnect_semaphore;
+    reconnect_semaphore.take();
+    while (1) {
+      /* Scan Device */
+      BLEAdvertisedDevice *pDevice = new BLEAdvertisedDevice();
+      *pDevice = BLECheeseTimerServiceClient::findDevice(position);
+      /* BLE Client */
+      BLEClient *pClient = BLEDevice::createClient();
+      pClient->setClientCallbacks(new MyBLEClientCallbacks(
+          [&](BLEClient *pClient) {
+            logi << "onConnect" << std::endl;
+            pStartLED->on();
+            BLECheeseTimerServiceClient::update_params(
+                pClient->getPeerAddress().getNative());
+          },
+          [&](BLEClient *pClient) {
+            logi << "onDisconnect" << std::endl;
+            pStartLED->blink();
+            reconnect_semaphore.give();
+          }));
+      pClient->connect(pDevice);
 
-  /* BLE Client */
-  BLEClient *pClient = BLEDevice::createClient();
-  pClient->setClientCallbacks(new MyBLEClientCallbacks(
-      [&](auto *pClient) {
-        logi << "onConnect" << std::endl;
-        pStartLED->on();
-      },
-      [&](auto *pClient) {
-        logi << "onDisconnect" << std::endl;
-        pStartLED->blink();
-        *pDeviceStart =
-            findDeviceByPosition(BLECheeseTimerService::Position::Start);
-      }));
-  pClient->connect(pDeviceStart);
-  // pClient->connect(pDeviceGoal);
+      /* GATT BAS */
+      BLEBatteryServiceClient *pBLEBatteryServiceClient
+          __attribute__((unused)) = new BLEBatteryServiceClient(
+              pClient, [](uint8_t level) { logi << (int)level << std::endl; });
 
-  /* GATT BAS */
-  BLEBatteryServiceClient *pBLEBatteryServiceClient __attribute__((unused)) =
-      new BLEBatteryServiceClient(
-          pClient, [](uint8_t level) { logi << (int)level << std::endl; });
+      /* GATT Cheese Timer Service */
+      BLECheeseTimerServiceClient *pBLECheeseTimerServiceClient
+          __attribute__((unused)) = new BLECheeseTimerServiceClient(
+              pClient, [](uint32_t timer) { logi << (int)timer << std::endl; });
 
-  /* GATT Cheese Timer Service */
-  BLECheeseTimerServiceClient *pBLECheeseTimerServiceClient
-      __attribute__((unused)) = new BLECheeseTimerServiceClient(
-          pClient, [](uint32_t timer) { logi << (int)timer << std::endl; });
+      /* wait for reconnection requested */
+      reconnect_semaphore.take();
+    }
+  };
+
+  /* handle devices */
+  handleDevice(BLECheeseTimerService::Position::Start);
 
   /* Main Loop */
   while (1) {
