@@ -29,8 +29,8 @@
 #include "app_config.h"
 #include "app_led.h"
 #include "app_log.h"
-#include "ble_app_callback.h"
 #include "ble_battery_service.h"
+#include "ble_callback_utils.h"
 #include "ble_cheese_timer_service.h"
 
 extern "C" void app_main() {
@@ -47,7 +47,7 @@ extern "C" void app_main() {
   pGoalLED->blink();
 
   /* BLE Initialization */
-  FreeRTOS::sleep(1000);
+  FreeRTOS::sleep(3000);
   BLEDevice::init("Cheese Timer Gateway");
 
   /* BLE Advertising */
@@ -55,35 +55,59 @@ extern "C" void app_main() {
   pBLEAdvertising->start();
 
   /* BLE Scan */
-  BLEAdvertisedDevice advertisedDevice;
-  {
-    BLEScan *pScan = BLEDevice::getScan();
-    /* set scan callback */
-    pScan->setAdvertisedDeviceCallbacks(
-        new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
-          if (dev.getServiceDataUUID().equals(
-                  BLECheeseTimerService::ServiceUUID)) {
-            logi << "Device Found: " << advertisedDevice.toString()
-                 << std::endl;
-            std::string data = dev.getServiceData();
-            BLECheeseTimerService::Position position =
-                static_cast<BLECheeseTimerService::Position>((int)data[0]);
-            logi << "Position: " << BLECheeseTimerService::toString(position)
-                 << std::endl;
-            advertisedDevice = dev;
-            BLEDevice::getScan()->stop();
-          }
-        }));
-    /* conduct scan */
-    // this blocks until the target device is found
-    BLEScanResults scanResults = pScan->start(60);
-    /* unset scan callback */
-    pScan->setAdvertisedDeviceCallbacks(nullptr);
-  }
+  BLEAdvertisedDevice *pDeviceStart = nullptr;
+  pDeviceStart = new BLEAdvertisedDevice();
+  // BLEAdvertisedDevice *pDeviceGoal = nullptr;
+  // pDeviceGoal = new BLEAdvertisedDevice();
+  auto findDeviceByPosition =
+      [&](BLECheeseTimerService::Position target_position) {
+        BLEScan *pScan = BLEDevice::getScan();
+        BLEAdvertisedDevice foundDevice;
+        /* set scan callback */
+        pScan->setAdvertisedDeviceCallbacks(
+            new MyAdvertisedDeviceCallbacks([&](BLEAdvertisedDevice dev) {
+              if (dev.getServiceDataUUID().equals(
+                      BLECheeseTimerService::ServiceUUID)) {
+                std::string data = dev.getServiceData();
+                BLECheeseTimerService::Position position =
+                    static_cast<BLECheeseTimerService::Position>((int)data[0]);
+                if (position == target_position) {
+                  logi << "Device Found: " << dev.toString() << std::endl;
+                  logi << "Position: "
+                       << BLECheeseTimerService::toString(position)
+                       << std::endl;
+                  foundDevice = dev;
+                  BLEDevice::getScan()->stop();
+                }
+              }
+            }));
+        /* conduct scan */
+        logi << "Scan: " << BLECheeseTimerService::toString(target_position)
+             << std::endl;
+        // this blocks until the target device is found
+        BLEScanResults scanResults = pScan->start(3600 * 24);
+        /* unset scan callback */
+        pScan->setAdvertisedDeviceCallbacks(nullptr);
+        return foundDevice;
+      };
+  *pDeviceStart = findDeviceByPosition(BLECheeseTimerService::Position::Start);
+  // *pDeviceGoal = findDeviceByPosition(BLECheeseTimerService::Position::Goal);
 
   /* BLE Client */
   BLEClient *pClient = BLEDevice::createClient();
-  pClient->connect(&advertisedDevice);
+  pClient->setClientCallbacks(new MyBLEClientCallbacks(
+      [&](auto *pClient) {
+        logi << "onConnect" << std::endl;
+        pStartLED->on();
+      },
+      [&](auto *pClient) {
+        logi << "onDisconnect" << std::endl;
+        pStartLED->blink();
+        *pDeviceStart =
+            findDeviceByPosition(BLECheeseTimerService::Position::Start);
+      }));
+  pClient->connect(pDeviceStart);
+  // pClient->connect(pDeviceGoal);
 
   /* GATT BAS */
   BLEBatteryServiceClient *pBLEBatteryServiceClient __attribute__((unused)) =
