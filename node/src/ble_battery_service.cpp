@@ -32,28 +32,8 @@ BLEBatteryService::BLEBatteryService(BLEServer *pServer) : pServer(pServer) {
   pBatteryLevelCharacteristic = pBatteryService->createCharacteristic(
       static_cast<uint16_t>(0x2a19),
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-  /* setup event callback */
-  class BatteryLevelCharacteristicCallbacks
-      : public BLECharacteristicCallbacks {
-  public:
-    BatteryLevelCharacteristicCallbacks() {}
-    virtual void onRead(BLECharacteristic *pCharacteristic) override {
-      logi << pCharacteristic->toString() << std::endl;
-      // TODO: update battery level
-    }
-  };
-  pBatteryLevelCharacteristic->setCallbacks(
-      new BatteryLevelCharacteristicCallbacks());
   /* BLE CCCD: Client Characteristic Configuration Description (0x2902) */
   BLE2902 *pBLE2902 = new BLE2902();
-  class BLE2902Callback : public BLEDescriptorCallbacks {
-  public:
-    BLE2902Callback() {}
-    virtual void onWrite(BLEDescriptor *pDescriptor) override {
-      logi << pDescriptor->toString() << std::endl;
-    }
-  };
-  pBLE2902->setCallbacks(new BLE2902Callback());
   pBatteryLevelCharacteristic->addDescriptor(pBLE2902);
   /* BLE CPFD: Characteristic Presentation Format Descriptor (0x2904) */
   BLE2904 *pBLE2904 = new BLE2904();

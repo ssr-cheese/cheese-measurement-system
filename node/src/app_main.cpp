@@ -67,16 +67,22 @@ extern "C" void app_main() {
 
   /* BLE Initialization */
   BLEDevice::init(std::string{DeviceName} + " " + positionString);
+  BLEDevice::setPower(ESP_PWR_LVL_P4);
 
   /* BLE Server */
   BLEServer *pServer = BLEDevice::createServer();
   /* setup event callback*/
   pServer->setCallbacks(new AppBLEServerCallbacks(
       [&](BLEServer *pServer) {
+        logi << "Connected" << std::endl;
         BLEDevice::getAdvertising()->stop();
         pErrorStatusLED->off();
       },
-      [&](BLEServer *pServer) { pErrorStatusLED->blink(); }));
+      [&](BLEServer *pServer) {
+        logi << "Disconnected" << std::endl;
+        if (pServer->getConnectedCount() == 0)
+          pErrorStatusLED->blink();
+      }));
 
   /* Cheese Timer Service */
   BLECheeseTimerService *pCheeseService =
@@ -111,7 +117,8 @@ extern "C" void app_main() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    const auto period = std::chrono::seconds(10);
+    // const auto period = std::chrono::seconds(10);
+    const auto period = std::chrono::milliseconds(500);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
       /* Periodical EXecution */
