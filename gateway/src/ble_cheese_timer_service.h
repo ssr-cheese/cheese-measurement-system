@@ -31,6 +31,10 @@ public:
     Start,
     Goal,
   };
+  static std::string toString(Position pos) {
+    static const char *position_string[] = {"Start", "Goal"};
+    return position_string[static_cast<int>(pos)];
+  }
 
 public:
   /**
