@@ -165,9 +165,10 @@ public:
       // this blocks until the target device is found
       BLEScanResults scanResults = pScan->start(1);
       /* unset scan callback */
-      pScan->setAdvertisedDeviceCallbacks(nullptr);
-      if (deviceFound)
+      if (deviceFound) {
+        pScan->setAdvertisedDeviceCallbacks(nullptr);
         return foundDevice;
+      }
     }
   }
   static void update_params(esp_bd_addr_t *addr) {
