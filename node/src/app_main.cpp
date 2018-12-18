@@ -162,4 +162,6 @@ extern "C" void app_main() {
   /* wait forever */
   batteryMonitorThread.join();
   cheeseTimerThread.join();
+  /* sleep forever */
+  vTaskDelay(portMAX_DELAY);
 }
