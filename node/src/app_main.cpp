@@ -10,14 +10,14 @@
  */
 
 #include "battery_monitor.h"
-#include "ble_app_callback.h"
 #include "ble_battery_service.h"
+#include "ble_callback_utils.h"
 #include "ble_cheese_timer_service.h"
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
-#include <Thread.h>
 #include <nvs_flash.h>
+#include <thread.h>
 
 #include <VL53L0X.h>
 #include <VL6180X.h>
@@ -98,7 +98,7 @@ extern "C" void app_main() {
   }
 
   /* Setup Complete */
-  pCheeseService->notifyMessage("Node Setup Completed :)");
+  pCheeseService->notifyMessage("Setup Completed :)");
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
