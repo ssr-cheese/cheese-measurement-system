@@ -82,37 +82,70 @@ public:
     /* Timer Characteristic */
     pTimerCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::TimeCharacteristicUUID);
-    pTimerCharacteristic->registerForNotify(
-        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
-           size_t length, bool isNotify) {
-          if (length != 4) {
-            loge << "Length Error" << std::endl;
-            return;
-          }
-          uint32_t timer = pData[3];
-          timer = (timer << 8) | pData[2];
-          timer = (timer << 8) | pData[1];
-          timer = (timer << 8) | pData[0];
-          logi << "Timer: " << (int)timer << std::endl;
-        });
+    {
+      /* setup notify callback */
+      pTimerCharacteristic->registerForNotify(
+          [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+             size_t length, bool isNotify) {
+            if (length != 4) {
+              loge << "Length Error" << std::endl;
+              return;
+            }
+            uint32_t timer = pData[3];
+            timer = (timer << 8) | pData[2];
+            timer = (timer << 8) | pData[1];
+            timer = (timer << 8) | pData[0];
+            logd << "Timer: " << (int)timer << std::endl;
+          });
+      BLERemoteDescriptor *pBLE2902 =
+          pTimerCharacteristic->getDescriptor(static_cast<uint16_t>(0x2902));
+      uint8_t val[2] = {0x01, 0x00};
+      pBLE2902->writeValue(val, 2);
+      /* read */
+      logi << "Initial Timer: " << readTimer() << std::endl;
+    }
     /* Message Characteristic */
     pMessageCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::MessageCharacteristicUUID);
-    // logi << "Message: " << readMessage() << std::endl;
-    pMessageCharacteristic->registerForNotify(
-        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
-           size_t length, bool isNotify) {
-          logi << "Message: " << std::string((const char *)pData) << std::endl;
-        });
+    {
+      /* setup notify callback */
+      pMessageCharacteristic->registerForNotify(
+          [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+             size_t length, bool isNotify) {
+            logd << "Message: " << std::string((const char *)pData)
+                 << std::endl;
+          });
+      BLERemoteDescriptor *pBLE2902 =
+          pMessageCharacteristic->getDescriptor(static_cast<uint16_t>(0x2902));
+      uint8_t val[2] = {0x01, 0x00};
+      pBLE2902->writeValue(val, 2);
+      /* read */
+      logi << "Initial Message: " << readMessage() << std::endl;
+    }
     /* Position Characteristic */
     pPositionCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::PositionCharacteristicUUID);
-    // logi << "Position: " << static_cast<int>(readPosition()) << std::endl;
-    pPositionCharacteristic->registerForNotify(
-        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
-           size_t length, bool isNotify) {
-          logi << "Position: " << (int)pData[0] << std::endl;
-        });
+    {
+      /* setup notify callback */
+      pPositionCharacteristic->registerForNotify(
+          [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+             size_t length, bool isNotify) {
+            if (length != sizeof(BLECheeseTimerService::Position)) {
+              loge << "Length Error" << std::endl;
+              return;
+            }
+            const BLECheeseTimerService::Position *pos =
+                reinterpret_cast<const BLECheeseTimerService::Position *>(
+                    pData);
+            logi << "Initial Position: " << static_cast<int>(*pos) << std::endl;
+          });
+      BLERemoteDescriptor *pBLE2902 =
+          pPositionCharacteristic->getDescriptor(static_cast<uint16_t>(0x2902));
+      uint8_t val[2] = {0x01, 0x00};
+      pBLE2902->writeValue(val, 2);
+      /* read */
+      logi << "Position: " << static_cast<int>(readPosition()) << std::endl;
+    }
   }
 
   uint32_t readTimer() {
