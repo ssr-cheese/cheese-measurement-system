@@ -75,7 +75,7 @@ extern "C" void app_main() {
   pServer->setCallbacks(new AppBLEServerCallbacks(
       [&](BLEServer *pServer) {
         logi << "Connected" << std::endl;
-        BLEDevice::getAdvertising()->stop();
+        pServer->getAdvertising()->stop();
         pErrorStatusLED->off();
       },
       [&](BLEServer *pServer) {
@@ -92,7 +92,7 @@ extern "C" void app_main() {
   BLEBatteryService *pBatteryService = new BLEBatteryService(pServer);
 
   /* BLE Advertising */
-  BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
+  BLEAdvertising *pBLEAdvertising = pServer->getAdvertising();
   {
     BLEAdvertisementData advData;
     std::string data;
@@ -117,8 +117,7 @@ extern "C" void app_main() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    // const auto period = std::chrono::seconds(10);
-    const auto period = std::chrono::milliseconds(500);
+    const auto period = std::chrono::seconds(10);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
       /* Periodical EXecution */
@@ -162,6 +161,6 @@ extern "C" void app_main() {
   /* wait forever */
   batteryMonitorThread.join();
   cheeseTimerThread.join();
-  /* sleep forever */
+  /* never return since the objects will be destructed */
   vTaskDelay(portMAX_DELAY);
 }

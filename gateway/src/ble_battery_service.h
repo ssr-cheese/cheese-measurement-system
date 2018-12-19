@@ -51,9 +51,7 @@ protected:
 
 class BLEBatteryServiceClient {
 public:
-  BLEBatteryServiceClient(
-      BLEClient *pClient,
-      std::function<void(uint8_t)> notifyCallback = nullptr) {
+  BLEBatteryServiceClient(BLEClient *pClient) {
     /* BLE Remote Service */
     pBatteryService = pClient->getService(BLEBatteryService::ServiceUUID);
     /* BLE Remote Characteristic */
@@ -61,17 +59,19 @@ public:
         BLEBatteryService::BatteryLevelCharacteristicUUID);
     /* setup notify callback */
     pBatteryLevelCharacteristic->registerForNotify(
-        [notifyCallback](BLERemoteCharacteristic *pCharacteristic,
-                         uint8_t *pData, size_t length, bool isNotify) {
+        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+           size_t length, bool isNotify) {
           if (length < 1) {
             logw << "no Battery Level data" << std::endl;
             return;
           }
           uint8_t level = pData[0];
           logi << "Battery Level: " << (int)level << std::endl;
-          if (notifyCallback != nullptr)
-            notifyCallback(level);
         });
+    BLERemoteDescriptor *pBLE2902 = pBatteryLevelCharacteristic->getDescriptor(
+        static_cast<uint16_t>(0x2902));
+    uint8_t val[2] = {0x01, 0x00};
+    pBLE2902->writeValue(val, 2);
   }
   uint8_t readBatteryLevel() {
     return pBatteryLevelCharacteristic->readUInt8();

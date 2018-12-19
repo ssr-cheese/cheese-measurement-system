@@ -75,9 +75,7 @@ protected:
 
 class BLECheeseTimerServiceClient {
 public:
-  BLECheeseTimerServiceClient(
-      BLEClient *pClient,
-      std::function<void(uint32_t)> notifyCallback = nullptr) {
+  BLECheeseTimerServiceClient(BLEClient *pClient) {
     /* BLE Remote Service */
     pCheeseTimerService =
         pClient->getService(BLECheeseTimerService::ServiceUUID);
@@ -85,8 +83,8 @@ public:
     pTimerCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::TimeCharacteristicUUID);
     pTimerCharacteristic->registerForNotify(
-        [notifyCallback](BLERemoteCharacteristic *pCharacteristic,
-                         uint8_t *pData, size_t length, bool isNotify) {
+        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+           size_t length, bool isNotify) {
           if (length != 4) {
             loge << "Length Error" << std::endl;
             return;
@@ -96,8 +94,6 @@ public:
           timer = (timer << 8) | pData[1];
           timer = (timer << 8) | pData[0];
           logi << "Timer: " << (int)timer << std::endl;
-          if (notifyCallback != nullptr)
-            notifyCallback(timer);
         });
     /* Message Characteristic */
     pMessageCharacteristic = pCheeseTimerService->getCharacteristic(
@@ -129,10 +125,9 @@ public:
     return msg;
   }
   BLECheeseTimerService::Position readPosition() {
-    pPositionCharacteristic->readValue();
-    BLECheeseTimerService::Position *pos =
-        reinterpret_cast<BLECheeseTimerService::Position *>(
-            pPositionCharacteristic->readRawData());
+    const BLECheeseTimerService::Position *pos =
+        reinterpret_cast<const BLECheeseTimerService::Position *>(
+            pPositionCharacteristic->readValue().c_str());
     return *pos;
   }
   static BLEAdvertisedDevice

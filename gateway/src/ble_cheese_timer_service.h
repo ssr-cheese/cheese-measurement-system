@@ -75,9 +75,7 @@ protected:
 
 class BLECheeseTimerServiceClient {
 public:
-  BLECheeseTimerServiceClient(
-      BLEClient *pClient,
-      std::function<void(uint32_t)> notifyCallback = nullptr) {
+  BLECheeseTimerServiceClient(BLEClient *pClient) {
     /* BLE Remote Service */
     pCheeseTimerService =
         pClient->getService(BLECheeseTimerService::ServiceUUID);
@@ -85,8 +83,8 @@ public:
     pTimerCharacteristic = pCheeseTimerService->getCharacteristic(
         BLECheeseTimerService::TimeCharacteristicUUID);
     pTimerCharacteristic->registerForNotify(
-        [notifyCallback](BLERemoteCharacteristic *pCharacteristic,
-                         uint8_t *pData, size_t length, bool isNotify) {
+        [](BLERemoteCharacteristic *pCharacteristic, uint8_t *pData,
+           size_t length, bool isNotify) {
           if (length != 4) {
             loge << "Length Error" << std::endl;
             return;
@@ -96,8 +94,6 @@ public:
           timer = (timer << 8) | pData[1];
           timer = (timer << 8) | pData[0];
           logi << "Timer: " << (int)timer << std::endl;
-          if (notifyCallback != nullptr)
-            notifyCallback(timer);
         });
     /* Message Characteristic */
     pMessageCharacteristic = pCheeseTimerService->getCharacteristic(
@@ -129,16 +125,13 @@ public:
     return msg;
   }
   BLECheeseTimerService::Position readPosition() {
-    pPositionCharacteristic->readValue();
-    BLECheeseTimerService::Position *pos =
-        reinterpret_cast<BLECheeseTimerService::Position *>(
-            pPositionCharacteristic->readRawData());
+    const BLECheeseTimerService::Position *pos =
+        reinterpret_cast<const BLECheeseTimerService::Position *>(
+            pPositionCharacteristic->readValue().c_str());
     return *pos;
   }
   static BLEAdvertisedDevice
   findDevice(BLECheeseTimerService::Position target_position) {
-    static FreeRTOS::Semaphore scan_semaphore;
-    scan_semaphore.take();
     BLEScan *pScan = BLEDevice::getScan();
     BLEAdvertisedDevice foundDevice;
     bool deviceFound = false;
@@ -169,7 +162,6 @@ public:
       /* unset scan callback */
       if (deviceFound) {
         pScan->setAdvertisedDeviceCallbacks(nullptr);
-        scan_semaphore.give();
         return foundDevice;
       }
     }
@@ -182,7 +174,7 @@ public:
     conn_param.min_int = 50 / 1.25f;
     conn_param.max_int = 30 / 1.25f;
     conn_param.latency = 0;
-    conn_param.timeout = 20;
+    conn_param.timeout = 100;
     ESP_ERROR_CHECK(esp_ble_gap_update_conn_params(&conn_param));
   }
 

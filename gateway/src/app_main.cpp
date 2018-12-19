@@ -50,10 +50,6 @@ extern "C" void app_main() {
   BLEDevice::init("Cheese Timer Gateway");
   BLEDevice::setPower(ESP_PWR_LVL_P4);
 
-  /* BLE Advertising */
-  BLEAdvertising *pBLEAdvertising = BLEDevice::getAdvertising();
-  pBLEAdvertising->start();
-
   /* BLE Scan */
   auto handleDevice = [&](BLEAdvertisedDevice *pDevice,
                           BLECheeseTimerService::Position position) {
@@ -93,18 +89,17 @@ extern "C" void app_main() {
     reconnect_semaphore.take();
     std::string position_string = BLECheeseTimerService::toString(position);
     while (1) {
+      pClient->disconnect();
       /* Connect */
       logi << "Connect " << position_string << std::endl;
-      while (!pClient->connect(pDevice)) {
+      while (!pClient->connect(pDevice->getAddress())) {
         loge << "Failed to Connect" << position_string << std::endl;
       }
 
       /* GATT BAS Client */
-      BLEBatteryServiceClient batteryServiceClient(
-          pClient, [](uint8_t level) { logi << (int)level << std::endl; });
+      BLEBatteryServiceClient batteryServiceClient(pClient);
       /* GATT Cheese Timer Service Client */
-      BLECheeseTimerServiceClient cheeseTimerServiceClient(
-          pClient, [](uint32_t timer) { logi << (int)timer << std::endl; });
+      BLECheeseTimerServiceClient cheeseTimerServiceClient(pClient);
       /* keep until disconnect */
       reconnect_semaphore.take();
     }

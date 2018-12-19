@@ -87,7 +87,7 @@ BLECheeseTimerService::BLECheeseTimerService(BLEServer *pServer, Position pos)
     pBLE2904->setFormat(BLE2904::FORMAT_UINT8);
     pPositionCharacteristic->addDescriptor(pBLE2904);
     /* Set Initial Value */
-    pPositionCharacteristic->setValue((uint8_t *)(&pos), sizeof(Position));
+    setPosition(pos);
   }
   /* start service */
   pCheeseService->start();
