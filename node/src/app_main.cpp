@@ -160,6 +160,7 @@ extern "C" void app_main() {
   /* wait forever */
   batteryMonitorThread.join();
   cheeseTimerThread.join();
+
   /* never return since the objects will be destructed */
   vTaskDelay(portMAX_DELAY);
 }

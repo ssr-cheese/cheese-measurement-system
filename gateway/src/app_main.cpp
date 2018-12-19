@@ -120,6 +120,6 @@ extern "C" void app_main() {
   //   handleDevice(&deviceGoal, BLECheeseTimerService::Position::Goal);
   // });
 
-  /* sleep forever */
+  /* never return since the objects will be destructed */
   vTaskDelay(portMAX_DELAY);
 }
