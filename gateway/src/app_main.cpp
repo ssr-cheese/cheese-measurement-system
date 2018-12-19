@@ -51,74 +51,56 @@ extern "C" void app_main() {
   BLEDevice::init("Cheese Timer Gateway");
   BLEDevice::setPower(ESP_PWR_LVL_P4);
 
-  /* BLE Scan */
-  auto handleDevice = [&](BLEAdvertisedDevice *pDevice,
-                          BLECheeseTimerService::Position position) {
-    FreeRTOS::Semaphore reconnect_semaphore;
-    /* BLE Client */
-    BLEClient *pClient = BLEDevice::createClient();
-    pClient->setClientCallbacks(new MyBLEClientCallbacks(
-        [&](BLEClient *pClient) {
-          BLECheeseTimerServiceClient::update_params(
-              pClient->getPeerAddress().getNative());
-          /* update status LED */
-          switch (position) {
-          case BLECheeseTimerService::Position::Start:
-            logi << "Connected Start" << std::endl;
-            pStartLED->on();
-            break;
-          case BLECheeseTimerService::Position::Goal:
-            logi << "Connected Goal" << std::endl;
-            pGoalLED->on();
-            break;
-          }
-        },
-        [&](BLEClient *pClient) {
-          reconnect_semaphore.give();
-          /* update status LED */
-          switch (position) {
-          case BLECheeseTimerService::Position::Start:
-            pStartLED->blink();
-            logw << "Disconnected Start" << std::endl;
-            break;
-          case BLECheeseTimerService::Position::Goal:
-            pGoalLED->blink();
-            logw << "Disconnected Goal" << std::endl;
-            break;
-          }
-        }));
-    reconnect_semaphore.take();
-    std::string position_string = BLECheeseTimerService::toString(position);
-    while (1) {
-      pClient->disconnect();
-      /* Connect */
-      logi << "Connect " << position_string << std::endl;
-      while (!pClient->connect(pDevice->getAddress())) {
-        loge << "Failed to Connect" << position_string << std::endl;
-      }
-
-      /* GATT BAS Client */
-      BLEBatteryServiceClient batteryServiceClient(pClient);
-      /* GATT Cheese Timer Service Client */
-      BLECheeseTimerServiceClient cheeseTimerServiceClient(pClient);
-      /* keep until disconnect */
-      reconnect_semaphore.take();
-    }
-  };
-
   /* Find Device */
   BLEAdvertisedDevice deviceStart = BLECheeseTimerServiceClient::findDevice(
       BLECheeseTimerService::Position::Start);
-  // BLEAdvertisedDevice deviceGoal = BLECheeseTimerServiceClient::findDevice(
-  //     BLECheeseTimerService::Position::Goal);
+  BLEAdvertisedDevice deviceGoal = BLECheeseTimerServiceClient::findDevice(
+      BLECheeseTimerService::Position::Goal);
 
-  /* handle devices */
-  FreeRTOSpp::Thread deviceStartThread([&]() {
-    handleDevice(&deviceStart, BLECheeseTimerService::Position::Start);
-  });
-  // FreeRTOSpp::Thread deviceGoalThread([&]() {
-  //   handleDevice(&deviceGoal, BLECheeseTimerService::Position::Goal);
-  // });
+  /* Connect Devices */
+  logi << "Connect Devices" << std::endl;
+  FreeRTOS::Semaphore reconnect_semaphore;
+  LED *pLED[2] = {pStartLED, pGoalLED};
+  BLEAdvertisedDevice *pBLEAdvertisedDevice[2] = {&deviceStart, &deviceGoal};
+  std::string pos_str[2] = {
+      BLECheeseTimerService::toString(BLECheeseTimerService::Position::Start),
+      BLECheeseTimerService::toString(BLECheeseTimerService::Position::Goal),
+  };
+  BLEClient *pClient[2];
+  for (int i = 0; i < 2; ++i) {
+    pClient[i] = BLEDevice::createClient();
+    pClient[i]->setClientCallbacks(new MyBLEClientCallbacks(
+        [&, i](BLEClient *pClient) {
+          pLED[i]->on();
+          logi << "onConnect " << pos_str[i] << std::endl;
+          BLECheeseTimerServiceClient::update_params(
+              pClient->getPeerAddress().getNative());
+        },
+        [&, i](BLEClient *pClient) {
+          pLED[i]->blink();
+          logi << "onDisconnect " << pos_str[i] << std::endl;
+          reconnect_semaphore.give();
+        }));
+  }
+  reconnect_semaphore.take();
+  while (1) {
+    for (int i = 0; i < 2; ++i) {
+      if (!pClient[i]->isConnected()) {
+        logi << "Connect: " << pos_str[i] << ": "
+             << pBLEAdvertisedDevice[i]->toString() << std::endl;
+        if (!pClient[i]->connect(pBLEAdvertisedDevice[i]->getAddress())) {
+          loge << "Failed to Connect " << std::endl;
+          continue;
+        }
+        logi << "Configure BLE Remote Client" << std::endl;
+        /* GATT BAS Client */
+        BLEBatteryServiceClient batteryServiceClient(pClient[i]);
+        /* GATT Cheese Timer Service Client */
+        BLECheeseTimerServiceClient cheeseTimerServiceClient(pClient[i]);
+      }
+    }
+    reconnect_semaphore.take(100);
+  }
 
   /* never return since the objects will be destructed */
   vTaskDelay(portMAX_DELAY);
