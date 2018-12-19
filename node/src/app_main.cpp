@@ -107,8 +107,10 @@ extern "C" void app_main() {
   tof.i2cMasterInit();
   if (!tof.init()) {
     pCheeseService->notifyMessage("Failed to Initialize ToF sensor :(");
-    pErrorStatusLED->on();
-    vTaskDelay(portMAX_DELAY);
+    while (1) {
+      pErrorStatusLED->on();
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
   }
 
   /* Setup Complete */
