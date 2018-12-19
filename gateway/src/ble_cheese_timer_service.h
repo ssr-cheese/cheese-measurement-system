@@ -149,7 +149,6 @@ public:
   }
 
   uint32_t readTimer() {
-    pTimerCharacteristic->readValue();
     uint32_t timer = pTimerCharacteristic->readUInt32();
     return timer;
   }
@@ -204,10 +203,10 @@ public:
     logi << "update connection params" << std::endl;
     esp_ble_conn_update_params_t conn_param;
     memcpy(conn_param.bda, *addr, sizeof(esp_bd_addr_t));
-    conn_param.min_int = 50 / 1.25f;
-    conn_param.max_int = 30 / 1.25f;
-    conn_param.latency = 0;
-    conn_param.timeout = 100;
+    conn_param.min_int = 50 / 1.25f; /**< T [ms] / 1.25f */
+    conn_param.max_int = 30 / 1.25f; /**< T [ms] / 1.25f */
+    conn_param.latency = 0;          /**< T [ms] / 1.25f */
+    conn_param.timeout = 100 / 10;   /**< T [ms] / 10 */
     ESP_ERROR_CHECK(esp_ble_gap_update_conn_params(&conn_param));
   }
 

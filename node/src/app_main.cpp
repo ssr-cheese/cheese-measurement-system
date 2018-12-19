@@ -140,13 +140,14 @@ extern "C" void app_main() {
         if (!passing) {
           passing = true;
           pSensorStatusLED->on();
-          logd << "New Passed: " << range_mm << " [mm]" << std::endl;
           uint32_t value =
               std::chrono::duration_cast<std::chrono::milliseconds>(
                   std::chrono::steady_clock::now().time_since_epoch())
                   .count();
           pCheeseService->setPassedTime(value);
           pCheeseService->notify();
+          logd << "New Passed: " << (int)value << " [ms], " << range_mm
+               << " [mm]" << std::endl;
           /* Prevent from chattering */
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
