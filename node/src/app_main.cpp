@@ -9,6 +9,9 @@
  *
  */
 
+#include "app_config.h"
+#include "app_led.h"
+#include "app_log.h"
 #include "battery_monitor.h"
 #include "ble_battery_service.h"
 #include "ble_callback_utils.h"
@@ -32,10 +35,6 @@
 #undef max
 #endif
 #include <chrono>
-
-#include "app_config.h"
-#include "app_led.h"
-#include "app_log.h"
 
 /* No Global Variable */
 

@@ -68,6 +68,10 @@ public:
           uint8_t level = pData[0];
           logi << "Battery Level: " << (int)level << std::endl;
         });
+    BLERemoteDescriptor *pBLE2902 = pBatteryLevelCharacteristic->getDescriptor(
+        static_cast<uint16_t>(0x2902));
+    uint8_t val[2] = {0x01, 0x00};
+    pBLE2902->writeValue(val, 2);
   }
   uint8_t readBatteryLevel() {
     return pBatteryLevelCharacteristic->readUInt8();

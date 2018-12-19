@@ -132,8 +132,6 @@ public:
   }
   static BLEAdvertisedDevice
   findDevice(BLECheeseTimerService::Position target_position) {
-    // static FreeRTOS::Semaphore scan_semaphore;
-    // scan_semaphore.take();
     BLEScan *pScan = BLEDevice::getScan();
     BLEAdvertisedDevice foundDevice;
     bool deviceFound = false;
@@ -164,7 +162,6 @@ public:
       /* unset scan callback */
       if (deviceFound) {
         pScan->setAdvertisedDeviceCallbacks(nullptr);
-        // scan_semaphore.give();
         return foundDevice;
       }
     }

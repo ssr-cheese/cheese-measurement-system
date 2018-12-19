@@ -8,6 +8,14 @@
  * @copyright Copyright (c) 2018 Ryotaro Onuki
  *
  */
+
+#include "app_config.h"
+#include "app_led.h"
+#include "app_log.h"
+#include "ble_battery_service.h"
+#include "ble_callback_utils.h"
+#include "ble_cheese_timer_service.h"
+
 #include <BLEClient.h>
 #include <BLEDevice.h>
 #include <FreeRTOS.h>
@@ -25,13 +33,6 @@
 #undef max
 #endif
 #include <chrono>
-
-#include "app_config.h"
-#include "app_led.h"
-#include "app_log.h"
-#include "ble_battery_service.h"
-#include "ble_callback_utils.h"
-#include "ble_cheese_timer_service.h"
 
 extern "C" void app_main() {
   /* Boot Message */
@@ -108,16 +109,16 @@ extern "C" void app_main() {
   /* Find Device */
   BLEAdvertisedDevice deviceStart = BLECheeseTimerServiceClient::findDevice(
       BLECheeseTimerService::Position::Start);
-  BLEAdvertisedDevice deviceGoal = BLECheeseTimerServiceClient::findDevice(
-      BLECheeseTimerService::Position::Goal);
+  // BLEAdvertisedDevice deviceGoal = BLECheeseTimerServiceClient::findDevice(
+  //     BLECheeseTimerService::Position::Goal);
 
   /* handle devices */
   FreeRTOSpp::Thread deviceStartThread([&]() {
     handleDevice(&deviceStart, BLECheeseTimerService::Position::Start);
   });
-  FreeRTOSpp::Thread deviceGoalThread([&]() {
-    handleDevice(&deviceGoal, BLECheeseTimerService::Position::Goal);
-  });
+  // FreeRTOSpp::Thread deviceGoalThread([&]() {
+  //   handleDevice(&deviceGoal, BLECheeseTimerService::Position::Goal);
+  // });
 
   /* sleep forever */
   vTaskDelay(portMAX_DELAY);
