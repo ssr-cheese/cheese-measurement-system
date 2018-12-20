@@ -113,6 +113,18 @@ extern "C" void app_main() {
     }
   }
 
+  /* Determine Threshold of ToF */
+  const int Threshold_mm = [&]() {
+    int range_mm = tof.read();
+    if (range_mm < 135) {
+      logi << "This is Micro Mouse Field." << std::endl;
+      return 75; /**< Micro Mouse */
+    } else {
+      logi << "This is Classic Mouse Field." << std::endl;
+      return 150; /**< Classic Mouse */
+    }
+  }();
+
   /* Setup Complete */
   pCheeseService->notifyMessage("Setup Completed :)");
 
@@ -123,10 +135,11 @@ extern "C" void app_main() {
     while (1) {
       /* Periodical EXecution */
       std::this_thread::sleep_until(sleep_time_handle += period);
-      uint8_t level =
-          pBatteryMonitor->calcBatteryLevel(pBatteryMonitor->getVoltage());
+      float voltage = pBatteryMonitor->getVoltage();
+      uint8_t level = pBatteryMonitor->calcBatteryLevel(voltage);
       pBatteryService->setBatteryLevel(level);
       pBatteryService->notify();
+      logd << "Battery Voltage: " << voltage << std::endl;
       if (level < 10)
         pSensorStatusLED->blink();
     }
@@ -134,7 +147,6 @@ extern "C" void app_main() {
 
   /* Cheese Time Thread in Background */
   FreeRTOSpp::Thread cheeseTimerThread([&]() {
-    const int Threshold_mm = 150; //< BLEで可変にしたい
     bool passing = false;
     while (1) {
       int range_mm = tof.read();
