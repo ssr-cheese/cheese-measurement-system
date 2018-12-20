@@ -114,8 +114,7 @@ void setup() {
       std::this_thread::sleep_until(sleep_time_handle += period);
       if (!WiFi.isConnected()) {
         pErrorStatusLED->blink();
-        WiFi.begin();
-        WiFi.waitForConnectResult();
+        esp_restart();
       }
     }
   });

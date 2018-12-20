@@ -54,22 +54,33 @@ void setup() {
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
 
+  /* tmp timer */
+  int tmp_timer;
+
   WebServer server(80);
   server.begin();
   server.on("/time_ms", [&]() {
-    int pos = server.arg("position").toInt();
+    const int pos = server.arg("position").toInt();
     pLED[pos]->off();
     server.send(200, "text/plain", String(millis()));
   });
   server.on("/passing", [&]() {
-    int pos = server.arg("position").toInt();
-    int time_ms = server.arg("time_ms").toInt();
+    const int pos = server.arg("position").toInt();
+    const int time_ms = server.arg("time_ms").toInt();
     logi << "Position: " << pos << " Passing at " << time_ms << std::endl;
     pLED[pos]->on();
+    /* tmp timer */
+    if (pos == 0) {
+      tmp_timer = time_ms;
+    } else {
+      logi << "tmp time: " << (time_ms - tmp_timer) << " [ms]" << std::endl;
+    }
+    /* to matlab */
+    std::cout << "matlab " << pos << " " << time_ms << std::endl;
     server.send(200);
   });
   server.on("/passed", [&]() {
-    int pos = server.arg("position").toInt();
+    const int pos = server.arg("position").toInt();
     int time_ms = server.arg("time_ms").toInt();
     logi << "Position: " << pos << " Passed at " << time_ms << std::endl;
     pLED[pos]->off();
