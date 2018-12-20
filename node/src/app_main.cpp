@@ -60,6 +60,7 @@ void setup() {
               : BLECheeseTimerService::Position::Goal;
   std::string positionString = BLECheeseTimerService::toString(position);
   logi << "Position: " << positionString << std::endl;
+  int pos = static_cast<int>(position);
 
   /* ToF Sensor Initialization */
   VL6180X tof;
@@ -92,11 +93,16 @@ void setup() {
   logi << "WiFi Connected" << std::endl;
   pErrorStatusLED->off();
 
+  int time_offset_ms;
   {
     logi << "GET" << std::endl;
     HTTPClient client;
-    client.begin("http://192.168.4.1/0");
+    client.begin("http://192.168.4.1/time_ms?position=" + String(pos));
     client.GET();
+    int time_ms = client.getStream().readString().toInt();
+    time_offset_ms = time_ms - millis();
+    logi << "Gateway: " << time_ms << ", offset: " << time_offset_ms
+         << std::endl;
     client.end();
   }
 
@@ -116,7 +122,7 @@ void setup() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    const auto period = std::chrono::seconds(1);
+    const auto period = std::chrono::seconds(10);
     // const auto period = std::chrono::milliseconds(500);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
@@ -124,45 +130,71 @@ void setup() {
       std::this_thread::sleep_until(sleep_time_handle += period);
       float voltage = pBatteryMonitor->getVoltage();
       uint8_t level = pBatteryMonitor->calcBatteryLevel(voltage);
-      logd << "Battery Voltage: " << voltage << "[V], Level: " << (int)level
+      logd << "Battery Voltage: " << voltage << " [V], Level: " << (int)level
            << std::endl;
       if (level < 10)
         pSensorStatusLED->blink();
-      HTTPClient client;
-      client.begin("http://192.168.4.1/0/battery?level=" + String(level));
-      client.GET();
-      client.end();
+      // HTTPClient client;
+      // client.begin("http://192.168.4.1/battery?position=" + String(pos) +
+      //              "&level=" + String(level));
+      // client.GET();
+      // client.end();
     }
   });
 
+  struct QueueItem {
+    enum Event {
+      Passing,
+      Passed,
+    } event;
+    uint32_t time_ms;
+    QueueItem(Event event, uint32_t t) : event(event), time_ms(t) {}
+    QueueItem() {}
+  };
+  const int queue_size = 10;
+  QueueHandle_t event_queue =
+      xQueueCreate(queue_size, sizeof(struct QueueItem));
+
   /* Cheese Time Thread in Background */
   FreeRTOSpp::Thread cheeseTimerThread([&]() {
-    bool passing = false;
+    bool passing_prev = false;
     while (1) {
-      int range_mm = tof.read();
-      if (range_mm < Threshold_mm) {
-        if (!passing) {
-          passing = true;
+      bool passing = (tof.read() < Threshold_mm);
+      if (passing_prev != passing) {
+        passing_prev = passing;
+        if (passing) {
+          logd << "ToF Covered" << std::endl;
           pSensorStatusLED->on();
-          uint32_t value =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::steady_clock::now().time_since_epoch())
-                  .count();
-          logd << "New Passed: " << (int)value << " [ms], " << range_mm
-               << " [mm]" << std::endl;
+          QueueItem qi(QueueItem::Passing, millis());
+          xQueueSendToBack(event_queue, &qi, 0);
+          /* Prevent from chattering */
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        } else {
+          logd << "ToF Released" << std::endl;
+          pSensorStatusLED->off();
+          QueueItem qi(QueueItem::Passed, millis());
+          xQueueSendToBack(event_queue, &qi, 0);
           /* Prevent from chattering */
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-      } else {
-        passing = false;
-        pSensorStatusLED->off();
+      }
+    }
+  });
+  FreeRTOSpp::Thread timeSendThread([&]() {
+    while (1) {
+      QueueItem qi;
+      if (xQueueReceive(event_queue, &qi, portMAX_DELAY) == pdTRUE) {
+        int time_ms = time_offset_ms + qi.time_ms;
+        HTTPClient client;
+        client.begin(String("http://192.168.4.1/") +
+                     ((qi.event == QueueItem::Passing) ? "passing" : "passed") +
+                     "?position=" + String(pos) +
+                     "&time_ms=" + String(time_ms));
+        client.GET();
       }
     }
   });
 
-  /* wait forever */
-  batteryMonitorThread.join();
-  cheeseTimerThread.join();
   /* sleep forever */
   vTaskDelay(portMAX_DELAY);
 }

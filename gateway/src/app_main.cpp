@@ -44,10 +44,9 @@ void setup() {
   logi << "Hello, this is " << DeviceName << "." << std::endl;
 
   /* GPIO Initialization */
-  LED *pStartLED = new LED(PinStartLED);
-  LED *pGoalLED = new LED(PinGoalLED);
-  pStartLED->blink();
-  pGoalLED->blink();
+  LED *pLED[2] = {new LED(PinStartLED), new LED(PinGoalLED)};
+  for (auto i : {0, 1})
+    pLED[i]->blink();
 
   WiFi.mode(WIFI_AP);
   WiFi.softAP("Cheese Timer", "");
@@ -57,20 +56,28 @@ void setup() {
 
   WebServer server(80);
   server.begin();
-  server.on("/0/battery", [&]() {
-    logi << "/0/battery" << std::endl;
-    logi << "Battery: " << server.arg("level").c_str() << " %%" << std::endl;
-    pStartLED->on();
+  server.on("/time_ms", [&]() {
+    int pos = server.arg("position").toInt();
+    pLED[pos]->off();
+    server.send(200, "text/plain", String(millis()));
+  });
+  server.on("/passing", [&]() {
+    int pos = server.arg("position").toInt();
+    int time_ms = server.arg("time_ms").toInt();
+    logi << "Position: " << pos << " Passing at " << time_ms << std::endl;
+    pLED[pos]->on();
     server.send(200);
   });
-  server.on("/0", [&]() {
-    logi << "/0" << std::endl;
-    pStartLED->on();
+  server.on("/passed", [&]() {
+    int pos = server.arg("position").toInt();
+    int time_ms = server.arg("time_ms").toInt();
+    logi << "Position: " << pos << " Passed at " << time_ms << std::endl;
+    pLED[pos]->off();
     server.send(200);
   });
-  server.on("/1", [&]() {
-    logi << "/1" << std::endl;
-    pGoalLED->on();
+  server.on("/battery", [&]() {
+    logi << "Position: " << server.arg("position").c_str()
+         << ", Battery: " << server.arg("level").c_str() << " %%" << std::endl;
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });
