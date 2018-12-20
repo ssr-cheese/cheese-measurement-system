@@ -9,23 +9,24 @@
  *
  */
 
+/* config */
 #include "app_config.h"
-#include "app_led.h"
 #include "app_log.h"
-#include "ble_battery_service.h"
-#include "ble_callback_utils.h"
-#include "ble_cheese_timer_service.h"
 
-#include <BLEClient.h>
-#include <BLEDevice.h>
-#include <FreeRTOS.h>
-#include <nvs_flash.h>
+/* src */
+#include "app_led.h"
 
-#include <functional>
-#include <iomanip>
-#include <iostream>
+/* private lib */
+#include <thread.h>
 
-// コンパイルエラーを防ぐため， Arduino.h で定義されているマクロをundef
+/* env lib */
+#include <Arduino.h>
+#include <HTTPClient.h>
+#include <WebServer.h>
+#include <WiFi.h>
+
+/* std lib */
+/* コンパイルエラーを防ぐため， Arduino.h で定義されているマクロをundef */
 #ifdef min
 #undef min
 #endif
@@ -34,12 +35,13 @@
 #endif
 #include <chrono>
 
-extern "C" void app_main() {
+#include <functional>
+#include <iomanip>
+#include <iostream>
+
+void setup() {
   /* Boot Message */
   logi << "Hello, this is " << DeviceName << "." << std::endl;
-
-  /* NVS flash initialization */
-  nvs_flash_init();
 
   /* GPIO Initialization */
   LED *pStartLED = new LED(PinStartLED);
@@ -47,61 +49,38 @@ extern "C" void app_main() {
   pStartLED->blink();
   pGoalLED->blink();
 
-  /* BLE Initialization */
-  BLEDevice::init("Cheese Timer Gateway");
-  BLEDevice::setPower(ESP_PWR_LVL_P4);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("Cheese Timer", "");
+  // WiFi.softAP("Cheese Timer", "", 1, 1, 4);
+  IPAddress apip = WiFi.softAPIP();
+  logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
 
-  /* Find Device */
-  BLEAdvertisedDevice deviceStart = BLECheeseTimerServiceClient::findDevice(
-      BLECheeseTimerService::Position::Start);
-  BLEAdvertisedDevice deviceGoal = BLECheeseTimerServiceClient::findDevice(
-      BLECheeseTimerService::Position::Goal);
+  WebServer server(80);
+  server.begin();
+  server.on("/0/battery", [&]() {
+    logi << "/0/battery" << std::endl;
+    logi << "Battery: " << server.arg("level").c_str() << " %%" << std::endl;
+    pStartLED->on();
+    server.send(200);
+  });
+  server.on("/0", [&]() {
+    logi << "/0" << std::endl;
+    pStartLED->on();
+    server.send(200);
+  });
+  server.on("/1", [&]() {
+    logi << "/1" << std::endl;
+    pGoalLED->on();
+    server.send(200);
+  });
+  server.onNotFound([&]() { logi << "NotFound" << std::endl; });
 
-  /* Connect Devices */
-  logi << "Connect Devices" << std::endl;
-  FreeRTOS::Semaphore reconnect_semaphore;
-  LED *pLED[2] = {pStartLED, pGoalLED};
-  BLEAdvertisedDevice *pBLEAdvertisedDevice[2] = {&deviceStart, &deviceGoal};
-  std::string pos_str[2] = {
-      BLECheeseTimerService::toString(BLECheeseTimerService::Position::Start),
-      BLECheeseTimerService::toString(BLECheeseTimerService::Position::Goal),
-  };
-  BLEClient *pClient[2];
-  for (int i = 0; i < 2; ++i) {
-    pClient[i] = BLEDevice::createClient();
-    pClient[i]->setClientCallbacks(new MyBLEClientCallbacks(
-        [&, i](BLEClient *pClient) {
-          pLED[i]->on();
-          logi << "onConnect " << pos_str[i] << std::endl;
-          BLECheeseTimerServiceClient::update_params(
-              pClient->getPeerAddress().getNative());
-        },
-        [&, i](BLEClient *pClient) {
-          pLED[i]->blink();
-          logi << "onDisconnect " << pos_str[i] << std::endl;
-          reconnect_semaphore.give();
-        }));
-  }
-  reconnect_semaphore.take();
   while (1) {
-    for (int i = 0; i < 2; ++i) {
-      if (!pClient[i]->isConnected()) {
-        logi << "Connect: " << pos_str[i] << ": "
-             << pBLEAdvertisedDevice[i]->toString() << std::endl;
-        if (!pClient[i]->connect(pBLEAdvertisedDevice[i]->getAddress())) {
-          loge << "Failed to Connect " << std::endl;
-          continue;
-        }
-        logi << "Configure BLE Remote Client" << std::endl;
-        /* GATT BAS Client */
-        BLEBatteryServiceClient batteryServiceClient(pClient[i]);
-        /* GATT Cheese Timer Service Client */
-        BLECheeseTimerServiceClient cheeseTimerServiceClient(pClient[i]);
-      }
-    }
-    reconnect_semaphore.take(100);
+    server.handleClient();
   }
 
-  /* never return since the objects will be destructed */
+  /* wait forever */
   vTaskDelay(portMAX_DELAY);
 }
+
+void loop() {}

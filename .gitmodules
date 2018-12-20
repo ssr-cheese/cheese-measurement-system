@@ -1,3 +1,0 @@
-[submodule "gateway/lib/esp32-snippets/esp32-snippets"]
-	path = gateway/lib/esp32-snippets/esp32-snippets
-	url = https://github.com/nkolban/esp32-snippets.git
