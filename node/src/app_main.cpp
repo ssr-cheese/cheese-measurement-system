@@ -83,12 +83,14 @@ void setup() {
   }();
 
   /* WiFi connection */
-  WiFi.begin("Cheese Timer", "");
-  WiFi.setAutoReconnect(true);
-  WiFi.waitForConnectResult();
-  if (!WiFi.isConnected()) {
-    loge << "WiFi Failed" << std::endl;
-    vTaskDelay(portMAX_DELAY);
+  while (1) {
+    // WiFi.begin("Cheese Timer", "");
+    WiFi.begin("Cheese Timer", "cheese");
+    WiFi.setAutoReconnect(true);
+    WiFi.waitForConnectResult();
+    if (!WiFi.isConnected()) {
+      loge << "WiFi Failed" << std::endl;
+    }
   }
   logi << "WiFi Connected" << std::endl;
   pErrorStatusLED->off();

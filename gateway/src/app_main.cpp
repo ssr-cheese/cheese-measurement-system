@@ -49,8 +49,8 @@ void setup() {
     pLED[i]->blink();
 
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("Cheese Timer");
-  // WiFi.softAP("Cheese Timer", "", 1, 1, 4);
+  // WiFi.softAP("Cheese Timer");
+  WiFi.softAP("Cheese Timer", "cheese", 1, true);
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
 
@@ -88,7 +88,8 @@ void setup() {
   });
   server.on("/battery", [&]() {
     logi << "Position: " << server.arg("position").c_str()
-         << ", Battery: " << server.arg("voltage").c_str() << " [V]" << std::endl;
+         << ", Battery: " << server.arg("voltage").c_str() << " [V]"
+         << std::endl;
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });
