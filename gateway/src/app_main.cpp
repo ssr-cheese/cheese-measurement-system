@@ -49,7 +49,7 @@ void setup() {
     pLED[i]->blink();
 
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("Cheese Timer", "");
+  WiFi.softAP("Cheese Timer");
   // WiFi.softAP("Cheese Timer", "", 1, 1, 4);
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
@@ -76,7 +76,7 @@ void setup() {
       logi << "tmp time: " << (time_ms - tmp_timer) << " [ms]" << std::endl;
     }
     /* to matlab */
-    std::cout << "matlab " << pos << " " << time_ms << std::endl;
+    std::cout << "1145141919 " << pos << " " << time_ms << std::endl;
     server.send(200);
   });
   server.on("/passed", [&]() {
@@ -88,7 +88,7 @@ void setup() {
   });
   server.on("/battery", [&]() {
     logi << "Position: " << server.arg("position").c_str()
-         << ", Battery: " << server.arg("level").c_str() << " %%" << std::endl;
+         << ", Battery: " << server.arg("voltage").c_str() << " [V]" << std::endl;
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });

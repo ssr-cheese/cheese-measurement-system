@@ -75,10 +75,10 @@ void setup() {
     int range_mm = tof.read();
     if (range_mm < 135) {
       logi << "This is Micro Mouse Field." << std::endl;
-      return 75; /**< Micro Mouse */
+      return 80; /**< Micro Mouse */
     } else {
       logi << "This is Classic Mouse Field." << std::endl;
-      return 150; /**< Classic Mouse */
+      return 160; /**< Classic Mouse */
     }
   }();
 
@@ -133,11 +133,11 @@ void setup() {
            << std::endl;
       if (level < 10)
         pSensorStatusLED->blink();
-      // HTTPClient client;
-      // client.begin("http://192.168.4.1/battery?position=" + String(pos) +
-      //              "&level=" + String(level));
-      // client.GET();
-      // client.end();
+      HTTPClient client;
+      client.begin("http://192.168.4.1/battery?position=" + String(pos) +
+                   "&voltage=" + String(voltage));
+      client.GET();
+      client.end();
     }
   });
 
