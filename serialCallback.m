@@ -1,34 +1,34 @@
-%serial read‚Ü‚Å‚Ü‚Æ‚ß‚½ŠÖ”
+%serial readã¾ã§ã¾ã¨ã‚ãŸé–¢æ•°
 function [] = serialCallback(src,event,app)
 
-%GUI‚Æ‹¤—L‚·‚é•Ï”Dæ“¾CƒZƒ“ƒTID
+%GUIã¨å…±æœ‰ã™ã‚‹å¤‰æ•°ï¼å–å¾—æ™‚åˆ»ï¼Œã‚»ãƒ³ã‚µID
 global got_time sensor_id success_flag esp32_serial;
 start_time = datetime('now');
 %
-%‚±‚±‚Å‚µ‚©g‚í‚È‚¢•Ï”
-mark = 'matlab';     %–Úˆó
-time_length = 5;    %‚Ì•¶š”
-id_length = 2;      %ID‚Ì•¶š”
+%ã“ã“ã§ã—ã‹ä½¿ã‚ãªã„å¤‰æ•°
+mark = 'matlab';     %ç›®å°
+time_length = 5;    %æ™‚åˆ»ã®æ–‡å­—æ•°
+id_length = 2;      %IDã®æ–‡å­—æ•°
 
 
 strings = [];
 count = [];
 msg = [];
-%1s“Ç‚İ‚İ.1sƒf[ƒ^‚ª–³‚©‚Á‚½‚ç10ms‚Åtimeout
+%1è¡Œèª­ã¿è¾¼ã¿.1è¡Œãƒ‡ãƒ¼ã‚¿ãŒç„¡ã‹ã£ãŸã‚‰10msã§timeout
 %if ~isempty(esp32_serial)
     [mark, read_time, sensor_id] = fscanf(esp32_serial,'%s %d %d');
 %end
 
-%“Ç‚İæ‚è¸”s‚È‚ç–³•¶š—ñ‚ğtime,ID‚ÉƒZƒbƒg
+%èª­ã¿å–ã‚Šå¤±æ•—ãªã‚‰ç„¡æ–‡å­—åˆ—ã‚’time,IDã«ã‚»ãƒƒãƒˆ
 got_time = "";
 sensor_id = "";
 success_flag = isempty(msg);
 
-%“Ç‚İæ‚è¬Œ÷
+%èª­ã¿å–ã‚ŠæˆåŠŸ
 if success_flag
     mark_last_index = strfind(strings,mark) + length(mark) - 1;
     
-    %mark‚Ì’¼Œã‚Éƒf[ƒ^‚ª‘¶İ
+    %markã®ç›´å¾Œã«ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨
     if (mark_last_index + time_length + id_length + 2) <= length(strings)
         got_time = datetime('now') %str(mark_index + 1 : mark_index + time_length);
         sensor_id = strings( mark_last_index + time_length + 3 : mark_last_index + time_length + id_length + 2)

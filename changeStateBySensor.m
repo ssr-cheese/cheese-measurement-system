@@ -1,18 +1,18 @@
-%”½‰‚µ‚½ƒZƒ“ƒT‚É‰‚¶‚Äˆ—Às
+%åå¿œã—ãŸã‚»ãƒ³ã‚µã«å¿œã˜ã¦å‡¦ç†å®Ÿè¡Œ
 function changeStateBySensor(app)
 global got_time sensor_id;
 if sensor_id == 0
-    % 00 : start‚ÌˆÓ
+    % 00 : startã®æ„
     startEpochTime = datetime(got_time / 1000, 'ConvertFrom', 'epochtime');
     app.triggerStart(startEpochTime);
     %app.triggerStart(got_time);
 elseif sensor_id  == 1
-    %01 : goal‚ÌˆÓ
+    %01 : goalã®æ„
     goalEpochTime = datetime(got_time / 1000, 'ConvertFrom', 'epochtime');
     app.triggerGoal(goalEpochTime);
     %app.triggerGoal(got_time);
 
 end
-%ƒZƒ“ƒTî•ñˆÈŠO‚Ì‚à‚Ì‚ğ“Ç‚İæ‚Á‚½‚Æ‚«‚ÍCsensor_id = ""‚Æ‚È‚Á‚Ä‚¢‚é
-sensor_id = ""; %“ñ˜A‘±‚Å”½‰‚µ‚È‚¢‚æ‚¤‚É–ˆ‰ñÁ‹
+%ã‚»ãƒ³ã‚µæƒ…å ±ä»¥å¤–ã®ã‚‚ã®ã‚’èª­ã¿å–ã£ãŸã¨ãã¯ï¼Œsensor_id = ""ã¨ãªã£ã¦ã„ã‚‹
+sensor_id = ""; %äºŒé€£ç¶šã§åå¿œã—ãªã„ã‚ˆã†ã«æ¯å›æ¶ˆå»
 end

@@ -1,7 +1,7 @@
 function serialEnd
 global esp32_serial;
 
-%serialI—¹ˆ—’Ç‰Á
+%serialçµ‚äº†å‡¦ç†è¿½åŠ 
 if ~isempty(esp32_serial)
     fclose(esp32_serial);
     delete(esp32_serial);

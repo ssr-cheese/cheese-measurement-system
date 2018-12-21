@@ -1,14 +1,14 @@
 function serialInitialize(com_name,baudrate,app)
 global esp32_serial
-%serialObject‰Šú‰»
-%COM‚ÍŠÂ‹«‚É‡‚í‚¹‚Ä•Ï‚¦‚é•K—v‚ ‚è‚»‚¤
-%timer‚æ‚èæ‚ÉƒVƒŠƒAƒ‹‰Šú‰»‚µ‚È‚¢‚ÆCtimerHandle‚ª‹N“®‚µ‚Ä‰Šú‰»‘O‚ÉƒVƒŠƒAƒ‹“Ç‚İ‚İ‚µ‚¿‚á‚¤
+%serialObjectåˆæœŸåŒ–
+%COMã¯ç’°å¢ƒã«åˆã‚ã›ã¦å¤‰ãˆã‚‹å¿…è¦ã‚ã‚Šãã†
+%timerã‚ˆã‚Šå…ˆã«ã‚·ãƒªã‚¢ãƒ«åˆæœŸåŒ–ã—ãªã„ã¨ï¼ŒtimerHandleãŒèµ·å‹•ã—ã¦åˆæœŸåŒ–å‰ã«ã‚·ãƒªã‚¢ãƒ«èª­ã¿è¾¼ã¿ã—ã¡ã‚ƒã†
 serial_list = seriallist;
 if ~isempty( find(serial_list == com_name,1) )
     esp32_serial = serial(com_name,'BaudRate',baudrate);
     esp32_serial.BytesAvailableFcn = @(src,event)serialCallback2(src,event,app);
     fopen(esp32_serial);
 else
-    serial_result = "serial failed" %serial¸”s‚µ‚½‚ÍC‚Æ‚è‚ ‚¦‚¸¸”s‚ğ•\¦‚¾‚¯‚Í‚µ‚Æ‚­
+    serial_result = "serial failed" %serialå¤±æ•—ã—ãŸæ™‚ã¯ï¼Œã¨ã‚Šã‚ãˆãšå¤±æ•—ã‚’è¡¨ç¤ºã ã‘ã¯ã—ã¨ã
     %close;
 end
