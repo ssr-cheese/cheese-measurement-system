@@ -1,6 +1,6 @@
 clear;
 
-api_accessor = ApiAccessor;
+api_accessor = ApiAccessor("half"); % Please select "half" or "classic" manually.
 
 %amount number of runner
 runners_num = 1;

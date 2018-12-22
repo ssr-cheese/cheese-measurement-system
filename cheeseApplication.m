@@ -4,7 +4,7 @@ clear;
 %all serial object is closed.
 delete(instrfindall);
 
-api_accessor = ApiAccessor;
+api_accessor = ApiAccessor("classic"); % Please select "half" or "classic" manually.
 
 % user manualy change
 runner_number = 1;
