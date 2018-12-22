@@ -18,6 +18,8 @@ static constexpr const char *DeviceName = "Cheese Timer Node";
 
 /**
  * @brief LED Mapping
+ * [0]: Start
+ * [1]: Goal
  */
-static constexpr gpio_num_t PinStartLED = GPIO_NUM_27;
-static constexpr gpio_num_t PinGoalLED = GPIO_NUM_26;
+static constexpr gpio_num_t PinSensorLED[2] = {GPIO_NUM_27, GPIO_NUM_26};
+static constexpr gpio_num_t PinConnectionLED[2] = {GPIO_NUM_23, GPIO_NUM_25};

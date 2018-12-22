@@ -123,7 +123,7 @@ void setup() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    const auto period = std::chrono::seconds(10);
+    const auto period = std::chrono::seconds(1);
     // const auto period = std::chrono::milliseconds(500);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
@@ -136,9 +136,14 @@ void setup() {
       if (level < 10)
         pSensorStatusLED->blink();
       HTTPClient client;
+      client.setTimeout(1000);
       client.begin("http://192.168.4.1/battery?position=" + String(pos) +
                    "&voltage=" + String(voltage));
-      client.GET();
+      int error = client.GET();
+      if (error < 0) {
+        loge << "HTTPClient Error: " << HTTPClient::errorToString(error)
+             << std::endl;
+      }
       client.end();
     }
   });
@@ -191,7 +196,12 @@ void setup() {
                      ((qi.event == QueueItem::Passing) ? "passing" : "passed") +
                      "?position=" + String(pos) +
                      "&time_ms=" + String(time_ms));
-        client.GET();
+        int error = client.GET();
+        if (error < 0) {
+          loge << "HTTPClient Error: " << HTTPClient::errorToString(error)
+               << std::endl;
+        }
+        client.end();
       }
     }
   });

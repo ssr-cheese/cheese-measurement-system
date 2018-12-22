@@ -44,9 +44,13 @@ void setup() {
   logi << "Hello, this is " << DeviceName << "." << std::endl;
 
   /* GPIO Initialization */
-  LED *pLED[2] = {new LED(PinStartLED), new LED(PinGoalLED)};
+  LED *pConnectionLED[2] = {new LED(PinConnectionLED[0]),
+                            new LED(PinConnectionLED[1])};
+  LED *pSensorLED[2] = {new LED(PinSensorLED[0]), new LED(PinSensorLED[1])};
   for (auto i : {0, 1})
-    pLED[i]->blink();
+    pConnectionLED[i]->blink();
+  for (auto i : {0, 1})
+    pSensorLED[i]->off();
 
   WiFi.mode(WIFI_AP);
   // WiFi.softAP("Cheese Timer");
@@ -57,18 +61,21 @@ void setup() {
   /* tmp timer */
   int tmp_timer;
 
+  /* Keep Alive Timer */
+  int prev_connection_time_ms[2] = {0, 0};
+
   WebServer server(80);
   server.begin();
   server.on("/time_ms", [&]() {
     const int pos = server.arg("position").toInt();
-    pLED[pos]->off();
+    pConnectionLED[pos]->on();
     server.send(200, "text/plain", String(millis()));
   });
   server.on("/passing", [&]() {
     const int pos = server.arg("position").toInt();
     const int time_ms = server.arg("time_ms").toInt();
     logi << "Position: " << pos << " Passing at " << time_ms << std::endl;
-    pLED[pos]->on();
+    pSensorLED[pos]->on();
     /* tmp timer */
     if (pos == 0) {
       tmp_timer = time_ms;
@@ -83,22 +90,30 @@ void setup() {
     const int pos = server.arg("position").toInt();
     int time_ms = server.arg("time_ms").toInt();
     logi << "Position: " << pos << " Passed at " << time_ms << std::endl;
-    pLED[pos]->off();
+    pSensorLED[pos]->off();
     server.send(200);
   });
   server.on("/battery", [&]() {
-    logi << "Position: " << server.arg("position").c_str()
+    const int pos = server.arg("position").toInt();
+    logi << "Position: " << pos
          << ", Battery: " << server.arg("voltage").c_str() << " [V]"
          << std::endl;
+    prev_connection_time_ms[pos] = millis();
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });
 
   while (1) {
     server.handleClient();
+    /* 一定時間未接続となったデバイスを検出 */
+    for (int i = 0; i < 2; ++i) {
+      if (millis() > prev_connection_time_ms[i] + 2000) {
+        pConnectionLED[i]->blink();
+      }
+    }
   }
 
-  /* wait forever */
+  /* it never reaches here */
   vTaskDelay(portMAX_DELAY);
 }
 
