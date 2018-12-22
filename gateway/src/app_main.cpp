@@ -53,7 +53,6 @@ void setup() {
     pSensorLED[i]->off();
 
   WiFi.mode(WIFI_AP);
-  // WiFi.softAP("Cheese Timer");
   WiFi.softAP("Cheese Timer", "cheese", 1, true);
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
@@ -63,6 +62,7 @@ void setup() {
 
   /* Keep Alive Timer */
   int prev_connection_time_ms[2] = {0, 0};
+  bool isConnected[2] = {false, false};
 
   WebServer server(80);
   server.begin();
@@ -99,6 +99,7 @@ void setup() {
          << ", Battery: " << server.arg("voltage").c_str() << " [V]"
          << std::endl;
     prev_connection_time_ms[pos] = millis();
+    isConnected[pos] = true;
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });
@@ -107,10 +108,12 @@ void setup() {
     server.handleClient();
     /* 一定時間未接続となったデバイスを検出 */
     for (int i = 0; i < 2; ++i) {
-      if (millis() > prev_connection_time_ms[i] + 2000) {
+      if (isConnected[i] && millis() > prev_connection_time_ms[i] + 4000) {
+        isConnected[i] = false;
         pConnectionLED[i]->blink();
       }
     }
+    vTaskDelay(1 / portTICK_PERIOD_MS);
   }
 
   /* it never reaches here */

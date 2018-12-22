@@ -84,13 +84,11 @@ void setup() {
 
   /* WiFi connection */
   while (1) {
-    // WiFi.begin("Cheese Timer", "");
-    WiFi.begin("Cheese Timer", "cheese");
-    WiFi.setAutoReconnect(true);
+    WiFi.begin("Cheese Timer", "ssrcheese");
     WiFi.waitForConnectResult();
-    if (!WiFi.isConnected()) {
-      loge << "WiFi Failed" << std::endl;
-    }
+    if (WiFi.isConnected())
+      break;
+    loge << "WiFi Failed" << std::endl;
   }
   logi << "WiFi Connected" << std::endl;
   pErrorStatusLED->off();
@@ -123,7 +121,7 @@ void setup() {
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
-    const auto period = std::chrono::seconds(1);
+    const auto period = std::chrono::seconds(3);
     // const auto period = std::chrono::milliseconds(500);
     auto sleep_time_handle = std::chrono::steady_clock::now();
     while (1) {
@@ -173,16 +171,14 @@ void setup() {
           pSensorStatusLED->on();
           QueueItem qi(QueueItem::Passing, millis());
           xQueueSendToBack(event_queue, &qi, 0);
-          /* Prevent from chattering */
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
         } else {
           logd << "ToF Released" << std::endl;
           pSensorStatusLED->off();
           QueueItem qi(QueueItem::Passed, millis());
           xQueueSendToBack(event_queue, &qi, 0);
-          /* Prevent from chattering */
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        /* Prevent from chattering */
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
       }
     }
   });
