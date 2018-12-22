@@ -1,8 +1,17 @@
 classdef ApiAccessor
     properties
         baseURI = matlab.net.URI('https://script.google.com/macros/s/AKfycbyep2Nb-uHKRhfZ0YCZOKeJETFCAK4nIwdh9UDnehVsfmJ1xkU/exec');
+        type;
     end
+    
     methods
+        function obj = ApiAccessor(type)
+            if nargin == 1
+                obj.type = type;
+            else
+                obj.type = "";
+            end
+        end
         
         %出走順が{id}の人の詳細な情報を入手
         %返り値は machine: 機体名, prod: 氏名, org: 団体名
@@ -14,7 +23,7 @@ classdef ApiAccessor
             req.Method = RequestMethod.GET;
             
             uri = obj.baseURI;
-            uri.Query = QueryParameter("id", id);
+            uri.Query = QueryParameter("id", id, "type", obj.type);
             
             res = send(req, uri);
             data = res.Body.Data;
@@ -33,7 +42,7 @@ classdef ApiAccessor
             req.Method = RequestMethod.GET;
             
             uri = obj.baseURI;
-            uri.Query = QueryParameter("rank", num);
+            uri.Query = QueryParameter("rank", num, "type", obj.type);
             
             res = send(req, uri);
             rankArray = res.Body.Data.rank;
@@ -47,7 +56,7 @@ classdef ApiAccessor
             
             req = RequestMessage;
             req.Method = RequestMethod.POST;
-            jsonStr = jsonencode(struct("id",id,"nth",nth,"time",time));
+            jsonStr = jsonencode(struct("id",id,"nth",nth,"time",time, "type", obj.type));
             req.Body = MessageBody(jsonStr);
             
             send(req, obj.baseURI);
