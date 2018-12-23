@@ -112,10 +112,10 @@ void setup() {
     while (1) {
       /* Periodical EXecution */
       std::this_thread::sleep_until(sleep_time_handle += period);
-      if (!WiFi.isConnected()) {
-        pErrorStatusLED->blink();
-        esp_restart();
-      }
+      // if (!WiFi.isConnected()) {
+      //   pErrorStatusLED->blink();
+      //   esp_restart();
+      // }
     }
   });
 

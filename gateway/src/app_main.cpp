@@ -53,7 +53,7 @@ void setup() {
     pSensorLED[i]->off();
 
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("Cheese Timer", "cheese", 1, true);
+  WiFi.softAP("Cheese Timer", "ssrcheese");
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
 
