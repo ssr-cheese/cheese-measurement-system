@@ -100,6 +100,7 @@ void setup() {
          << std::endl;
     prev_connection_time_ms[pos] = millis();
     isConnected[pos] = true;
+    pConnectionLED[pos]->on();
     server.send(200);
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });

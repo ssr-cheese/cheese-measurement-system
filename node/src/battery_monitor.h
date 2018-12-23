@@ -22,7 +22,8 @@ public:
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten(batteryAdcChannel, ADC_ATTEN_DB_11);
     int adc_raw = adc1_get_raw(batteryAdcChannel);
-    float voltage = 2 * 1.1f * 3.54813389f * adc_raw / 4095;
+    // float voltage = 2 * 1.1f * 3.54813389f * adc_raw / 4095;
+    float voltage = 2 * 1.0f * 3.54813389f * adc_raw / 4095;
     return voltage;
   }
   uint8_t calcBatteryLevel(const float voltage) const {
