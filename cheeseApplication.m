@@ -4,10 +4,10 @@ clear;
 %all serial object is closed.
 delete(instrfindall);
 
-api_accessor = ApiAccessor("classic"); % Please select "half" or "classic" manually.
+api_accessor = ApiAccessor("half"); % Please select "half" or "classic" manually.
 
 % user manualy change
-runner_number = 1;
+runner_number = 11;
 
 
 %get player data
@@ -18,14 +18,14 @@ catch Err
     warning("The program will be forcibly terminated.");
     return; %program is finished.
 end
-app = mousetimer(runner_number - 1,mouse_name, player_name, org_name);
+app = mousetimer(runner_number,mouse_name, player_name, org_name);
 
 %User must chage select appropriate COM port manually.
-serialInitialize('COM5',115200,app);
+serialInitialize('COM7',115200,app);
 
 %Wait for a player to complete measurement. If it's completed, you must press any key.
 while isvalid(app)
-    pause;
+    pause(1);
 end
 
 try

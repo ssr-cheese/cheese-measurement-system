@@ -1,6 +1,6 @@
 function uploadToWeb(api_accessor, mouse_index)
 
-robot_data = load("robot" + num2str(mouse_index - 1) + ".mat");
+robot_data = load("robot" + num2str(mouse_index) + ".mat");
 
 running_log = robot_data.individualData;
 

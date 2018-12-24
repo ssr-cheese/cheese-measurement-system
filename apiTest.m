@@ -1,6 +1,6 @@
 clear;
 
-api_accessor = ApiAccessor("half"); % Please select "half" or "classic" manually.
+api_accessor = ApiAccessor("classic"); % Please select "half" or "classic" manually.
 
 %amount number of runner
 runners_num = 1;
@@ -10,14 +10,14 @@ for mouse_index = 1:runners_num
     %get player data
     [mouse_name, player_name, org_name] = api_accessor.getDetail(mouse_index);
     
-    app = mousetimer(mouse_index - 1,mouse_name, player_name, org_name);
+    app = mousetimer(mouse_index,mouse_name, player_name, org_name);
     
     %serialInitialize('COM5',115200,app);
     
     
     %Wait for a player to complete measurement. If it's completed, you must press any key.
     while isvalid(app)
-        pause;
+        pause(1);
     end
     
     % If app is closed...
