@@ -35,7 +35,7 @@
 #endif
 #include <chrono>
 
-#include <functional>
+#include <functional> /**< std::function */
 #include <iomanip>
 #include <iostream>
 
@@ -52,19 +52,18 @@ void setup() {
   for (auto i : {0, 1})
     pSensorLED[i]->off();
 
+  /* WiFi Accesspoint Configuration */
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("Cheese Timer", "ssrcheese");
+  WiFi.softAP(WiFiSSID, WiFiPSK);
   IPAddress apip = WiFi.softAPIP();
   logd << "IPAddress: " << WiFi.softAPIP().toString().c_str() << std::endl;
-
-  /* tmp timer */
-  int tmp_timer;
 
   /* Keep Alive Timer */
   int prev_connection_time_ms[2] = {0, 0};
   bool isConnected[2] = {false, false};
 
-  WebServer server(80);
+  /* HTTP Web Server Configuration */
+  WebServer server(80); /**< TCP/IP port: 80 */
   server.begin();
   server.on("/time_ms", [&]() {
     const int pos = server.arg("position").toInt();
@@ -76,12 +75,6 @@ void setup() {
     const int time_ms = server.arg("time_ms").toInt();
     logi << "Position: " << pos << " Passing at " << time_ms << std::endl;
     pSensorLED[pos]->on();
-    /* tmp timer */
-    if (pos == 0) {
-      tmp_timer = time_ms;
-    } else {
-      logi << "tmp time: " << (time_ms - tmp_timer) << " [ms]" << std::endl;
-    }
     /* to matlab */
     std::cout << "1145141919 " << pos << " " << time_ms << std::endl;
     server.send(200);
@@ -105,6 +98,7 @@ void setup() {
   });
   server.onNotFound([&]() { logi << "NotFound" << std::endl; });
 
+  /* Handling Requests */
   while (1) {
     server.handleClient();
     /* 一定時間未接続となったデバイスを検出 */

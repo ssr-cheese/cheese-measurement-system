@@ -18,12 +18,16 @@
 static constexpr const char *DeviceName = "Cheese Timer Node";
 
 /**
+ * @brief WiFI Information
+ */
+static constexpr const char *WiFiSSID = "Cheese Timer";
+static constexpr const char *WiFiPSK = "ssrcheese";
+
+/**
  * @brief Battery Monitor Parameters
  */
 static constexpr adc1_channel_t BatteryAdcChannel =
     ADC1_CHANNEL_7; //< ADC1_Channel7 is GPIO35
-// static constexpr float BatteryMinVoltage = 4.8f;
-// static constexpr float BatteryMaxVoltage = 6.0f;
 static constexpr float BatteryMinVoltage = 3.6f;
 static constexpr float BatteryMaxVoltage = 4.2f;
 

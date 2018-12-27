@@ -17,6 +17,12 @@
 static constexpr const char *DeviceName = "Cheese Timer Node";
 
 /**
+ * @brief WiFI Information
+ */
+static constexpr const char *WiFiSSID = "Cheese Timer";
+static constexpr const char *WiFiPSK = "ssrcheese";
+
+/**
  * @brief LED Mapping
  * [0]: Start
  * [1]: Goal

@@ -16,7 +16,6 @@
 /* src */
 #include "app_led.h"
 #include "battery_monitor.h"
-#include "ble_cheese_timer_service.h"
 
 /* private lib */
 #include <VL53L0X.h>
@@ -55,12 +54,9 @@ void setup() {
   gpio_set_direction(PinPositionSelector, GPIO_MODE_INPUT);
   gpio_pullup_en(PinPositionSelector);
   int sw = gpio_get_level(PinPositionSelector);
-  BLECheeseTimerService::Position position =
-      sw == 0 ? BLECheeseTimerService::Position::Start
-              : BLECheeseTimerService::Position::Goal;
-  std::string positionString = BLECheeseTimerService::toString(position);
+  int pos = (sw == 0) ? 0 : 1;
+  std::string positionString = pos == 0 ? "Start" : "Goal";
   logi << "Position: " << positionString << std::endl;
-  int pos = static_cast<int>(position);
 
   /* ToF Sensor Initialization */
   VL6180X tof;
@@ -84,7 +80,7 @@ void setup() {
 
   /* WiFi connection */
   while (1) {
-    WiFi.begin("Cheese Timer", "ssrcheese");
+    WiFi.begin(WiFiSSID, WiFiPSK);
     WiFi.waitForConnectResult();
     if (WiFi.isConnected())
       break;
@@ -93,8 +89,8 @@ void setup() {
   logi << "WiFi Connected" << std::endl;
   pErrorStatusLED->off();
 
-  int time_offset_ms;
-  {
+  /* Synchronizing the Time in milliseconds */
+  int time_offset_ms = [&]() {
     logi << "GET" << std::endl;
     HTTPClient client;
     client.begin("http://192.168.4.1/time_ms?position=" + String(pos));
@@ -104,20 +100,8 @@ void setup() {
     logi << "Gateway: " << time_ms << ", offset: " << time_offset_ms
          << std::endl;
     client.end();
-  }
-
-  FreeRTOSpp::Thread wifiMonitorThread([&]() {
-    const auto period = std::chrono::milliseconds(100);
-    auto sleep_time_handle = std::chrono::steady_clock::now();
-    while (1) {
-      /* Periodical EXecution */
-      std::this_thread::sleep_until(sleep_time_handle += period);
-      // if (!WiFi.isConnected()) {
-      //   pErrorStatusLED->blink();
-      //   esp_restart();
-      // }
-    }
-  });
+    return time_offset_ms;
+  }();
 
   /* Battery Monitor Thread in Background*/
   FreeRTOSpp::Thread batteryMonitorThread([&]() {
@@ -133,6 +117,7 @@ void setup() {
            << std::endl;
       if (level < 10)
         pSensorStatusLED->blink();
+      /* Send Battry Data */
       HTTPClient client;
       client.setTimeout(1000);
       client.begin("http://192.168.4.1/battery?position=" + String(pos) +
@@ -146,6 +131,7 @@ void setup() {
     }
   });
 
+  /* ToF Event Queue */
   struct QueueItem {
     enum Event {
       Passing,
@@ -182,6 +168,8 @@ void setup() {
       }
     }
   });
+
+  /* Sending Timer Data Thread */
   FreeRTOSpp::Thread timeSendThread([&]() {
     while (1) {
       QueueItem qi;
